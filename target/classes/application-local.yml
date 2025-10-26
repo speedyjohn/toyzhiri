@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    username: postgres
+    password: root
+
+app:
+  jwt:
+    secret: MyUltraSecretKeyThatIsAtLeast123456789CharsLong1234567890987654321DamnHowMuchCharsDoINeed
+    expiration-ms: 86400000
