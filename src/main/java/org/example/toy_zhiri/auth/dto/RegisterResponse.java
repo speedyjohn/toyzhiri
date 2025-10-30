@@ -18,7 +18,8 @@ import java.util.UUID;
 public class RegisterResponse {
     private UUID id;
     private String email;
-    private String fullName;
+    private String firstName;
+    private String lastName;
     private String phone;
     private String city;
     private String role;

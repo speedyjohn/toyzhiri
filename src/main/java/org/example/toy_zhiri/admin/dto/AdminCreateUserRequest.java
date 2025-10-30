@@ -30,9 +30,21 @@ public class AdminCreateUserRequest {
     )
     private String password;
 
-    @NotBlank(message = "Полное имя обязательно")
-    @Size(min = 2, max = 255, message = "Имя должно быть от 2 до 255 символов")
-    private String fullName;
+    @NotBlank(message = "Имя обязательно")
+    @Size(min = 2, max = 100, message = "Имя должно быть от 2 до 100 символов")
+    @Pattern(
+            regexp = "^[a-zA-Zа-яА-ЯёЁ\\s-]+$",
+            message = "Имя может содержать только буквы, пробелы и дефисы"
+    )
+    private String firstName;
+
+    @NotBlank(message = "Фамилия обязательна")
+    @Size(min = 2, max = 100, message = "Фамилия должна быть от 2 до 100 символов")
+    @Pattern(
+            regexp = "^[a-zA-Zа-яА-ЯёЁ\\s-]+$",
+            message = "Фамилия может содержать только буквы, пробелы и дефисы"
+    )
+    private String lastName;
 
     @NotBlank(message = "Телефон обязателен")
     @Pattern(

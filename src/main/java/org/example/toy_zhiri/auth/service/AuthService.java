@@ -56,11 +56,13 @@ public class AuthService {
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
                 .phone(request.getPhone())
                 .city(request.getCity())
                 .role(UserRole.USER)
                 .emailVerified(false)
+                .isActive(true)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -68,7 +70,8 @@ public class AuthService {
         return RegisterResponse.builder()
                 .id(savedUser.getId())
                 .email(savedUser.getEmail())
-                .fullName(savedUser.getFullName())
+                .firstName(savedUser.getFirstName())
+                .lastName(savedUser.getLastName())
                 .phone(savedUser.getPhone())
                 .city(savedUser.getCity())
                 .role(savedUser.getRole().name())
@@ -95,6 +98,10 @@ public class AuthService {
 
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+            if (!user.getIsActive()) {
+                throw new RuntimeException("Аккаунт заблокирован. Обратитесь к администратору.");
+            }
 
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);

@@ -22,7 +22,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
@@ -33,8 +32,11 @@ public class User {
     @Column(name = "password", length = 255, nullable = false)
     private String password;
 
-    @Column(name = "fullname", length = 50, nullable = false)
-    private String fullName;
+    @Column(name = "first_name", length = 100, nullable = false)
+    private String firstName;
+
+    @Column(name = "last_name", length = 100, nullable = false)
+    private String lastName;
 
     @Column(name = "phone", length = 11, unique = true, nullable = false)
     private String phone;
@@ -49,6 +51,9 @@ public class User {
     @Column(name = "emailverified", nullable = false)
     private Boolean emailVerified = false;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     @Column(name = "lastlogin")
     private LocalDateTime lastLogin;
 
@@ -59,4 +64,12 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    /**
+     * Вспомогательный метод для получения полного имени.
+     */
+    @Transient
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 }
