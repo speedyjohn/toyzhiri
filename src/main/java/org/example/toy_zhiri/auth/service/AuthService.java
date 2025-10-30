@@ -1,5 +1,6 @@
 package org.example.toy_zhiri.auth.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.auth.dto.AuthRequest;
@@ -7,6 +8,7 @@ import org.example.toy_zhiri.auth.dto.AuthResponse;
 import org.example.toy_zhiri.auth.dto.RegisterRequest;
 import org.example.toy_zhiri.auth.dto.RegisterResponse;
 import org.example.toy_zhiri.auth.security.JwtTokenProvider;
+import org.example.toy_zhiri.auth.service.LoginHistoryService;
 import org.example.toy_zhiri.user.entity.User;
 import org.example.toy_zhiri.user.enums.UserRole;
 import org.example.toy_zhiri.user.repository.UserRepository;
@@ -29,6 +31,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final LoginHistoryService loginHistoryService;
 
     /**
      * Регистрирует нового пользователя в системе.
@@ -87,8 +90,28 @@ public class AuthService {
      * @return AuthResponse JWT токен для доступа
      * @throws RuntimeException если email или пароль неверны
      */
-    public AuthResponse login(AuthRequest request) {
+    public AuthResponse login(AuthRequest request, HttpServletRequest httpRequest) {
+        User user = null;
+
         try {
+            user = userRepository.findByEmail(request.getEmail())
+                    .orElse(null);
+
+            if (user == null) {
+                User tempUser = User.builder()
+                        .email(request.getEmail())
+                        .firstName("Unknown")
+                        .lastName("User")
+                        .build();
+                loginHistoryService.logLogin(tempUser, false, "Пользователь не найден", httpRequest);
+                throw new RuntimeException("Неверный email или пароль");
+            }
+
+            if (!user.getIsActive()) {
+                loginHistoryService.logLogin(user, false, "Аккаунт заблокирован", httpRequest);
+                throw new RuntimeException("Аккаунт заблокирован. Обратитесь к администратору.");
+            }
+
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getEmail(),
@@ -96,15 +119,10 @@ public class AuthService {
                     )
             );
 
-            User user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
-
-            if (!user.getIsActive()) {
-                throw new RuntimeException("Аккаунт заблокирован. Обратитесь к администратору.");
-            }
-
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
+
+            loginHistoryService.logLogin(user, true, null, httpRequest);
 
             String token = jwtTokenProvider.generateToken(
                     user.getId(),
@@ -117,10 +135,11 @@ public class AuthService {
                     .build();
 
         } catch (AuthenticationException e) {
+            // Неверный пароль
+            if (user != null) {
+                loginHistoryService.logLogin(user, false, "Неверный пароль", httpRequest);
+            }
             throw new RuntimeException("Неверный email или пароль");
         }
     }
-
-//    TODO
-//    public void logout(String token) {}
 }
