@@ -1,0 +1,15 @@
+# === Environment files ===
+flyway.conf
+
+# === IntelliJ IDEA ===
+.idea/
+*.iml
+out/
+target/
+
+# === Logs and temp ===
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
