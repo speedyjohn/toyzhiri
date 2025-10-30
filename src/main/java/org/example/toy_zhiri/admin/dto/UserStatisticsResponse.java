@@ -20,4 +20,6 @@ public class UserStatisticsResponse {
     private Long adminRoleCount;
     private Long verifiedEmailCount;
     private Long unverifiedEmailCount;
+    private Long activeUsersCount;
+    private Long inactiveUsersCount;
 }
