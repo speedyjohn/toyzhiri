@@ -2,6 +2,7 @@ package org.example.toy_zhiri.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.auth.dto.RegisterRequest;
@@ -47,7 +48,9 @@ public class AuthController {
             description = "Отправить запрос на авторизацию"
     )
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody AuthRequest request) {
-        return authService.login(request);
+    public AuthResponse login(
+            @Valid @RequestBody AuthRequest request,
+            HttpServletRequest httpRequest) {
+        return authService.login(request, httpRequest);
     }
 }
