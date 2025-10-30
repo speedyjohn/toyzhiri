@@ -45,4 +45,12 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
      * @return количество пользователей с этим статусом
      */
     long countByEmailVerified(Boolean emailVerified);
+
+    /**
+     * Подсчитывает количество пользователей по статусу активности.
+     *
+     * @param isActive статус активности
+     * @return количество пользователей
+     */
+    long countByIsActive(Boolean isActive);
 }
