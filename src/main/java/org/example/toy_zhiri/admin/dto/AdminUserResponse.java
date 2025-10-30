@@ -19,11 +19,13 @@ import java.util.UUID;
 public class AdminUserResponse {
     private UUID id;
     private String email;
-    private String fullName;
+    private String firstName;
+    private String lastName;
     private String phone;
     private String city;
     private String role;
     private Boolean emailVerified;
+    private Boolean isActive;
     private LocalDateTime lastLogin;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

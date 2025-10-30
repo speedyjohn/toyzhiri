@@ -54,12 +54,13 @@ public class AdminUserService {
             }
         }
 
-        // Поиск по email или имени
+        // Поиск по email, имени, фамилии
         if (search != null && !search.isBlank()) {
             spec = spec.and((root, query, cb) ->
                     cb.or(
                             cb.like(cb.lower(root.get("email")), "%" + search.toLowerCase() + "%"),
-                            cb.like(cb.lower(root.get("fullName")), "%" + search.toLowerCase() + "%")
+                            cb.like(cb.lower(root.get("firstName")), "%" + search.toLowerCase() + "%"),
+                            cb.like(cb.lower(root.get("lastName")), "%" + search.toLowerCase() + "%")
                     ));
         }
 
@@ -122,7 +123,8 @@ public class AdminUserService {
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
                 .phone(request.getPhone())
                 .city(request.getCity())
                 .role(UserRole.valueOf(request.getRole().toUpperCase()))
@@ -138,7 +140,8 @@ public class AdminUserService {
      *
      * Можно обновить:
      * - Email (с проверкой уникальности)
-     * - Имя (fullName)
+     * - Имя
+     * - Фамилию
      * - Телефон
      * - Город
      *
@@ -161,8 +164,12 @@ public class AdminUserService {
             user.setEmailVerified(false); // При смене email сбрасываем верификацию
         }
 
-        if (request.getFullName() != null) {
-            user.setFullName(request.getFullName());
+        if(request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName());
+        }
+
+        if(request.getLastName() != null) {
+            user.setLastName(request.getLastName());
         }
 
         if (request.getPhone() != null) {
@@ -280,8 +287,7 @@ public class AdminUserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
 
-        // TODO: Добавить поле isActive в сущность User и миграцию БД
-        // user.setActive(request.getIsActive());
+         user.setIsActive(request.getIsActive());
 
         User updatedUser = userRepository.save(user);
         return mapToAdminUserResponse(updatedUser);
@@ -355,7 +361,8 @@ public class AdminUserService {
         return AdminUserResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
-                .fullName(user.getFullName())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
                 .phone(user.getPhone())
                 .city(user.getCity())
                 .role(user.getRole().name())
@@ -373,7 +380,8 @@ public class AdminUserService {
         return AdminUserDetailResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
-                .fullName(user.getFullName())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
                 .phone(user.getPhone())
                 .city(user.getCity())
                 .role(user.getRole().name())
@@ -381,8 +389,6 @@ public class AdminUserService {
                 .lastLogin(user.getLastLogin())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
-                // Дополнительная информация для детального просмотра
-                .totalLogins(0L) // TODO: Подключить после реализации логирования входов
                 .build();
     }
 }
