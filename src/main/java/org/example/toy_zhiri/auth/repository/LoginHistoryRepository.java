@@ -14,7 +14,6 @@ import java.util.UUID;
  */
 @Repository
 public interface LoginHistoryRepository extends JpaRepository<LoginHistory, UUID> {
-
     /**
      * Находит историю входов пользователя с пагинацией.
      *

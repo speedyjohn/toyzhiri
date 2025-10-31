@@ -38,20 +38,19 @@ public class AdminLoginHistoryController {
      */
     @GetMapping("/user/{userId}")
     @Operation(
-            summary = "История входов пользователя",
-            description = "Получить историю входов/выходов конкретного пользователя по ID. Доступно только администраторам.",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "История входов пользователя",
+        description = "Получить историю входов/выходов конкретного пользователя по ID. Доступно только администраторам.",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<Page<LoginHistoryResponse>> getUserLoginHistory(
-            @Parameter(description = "ID пользователя")
-            @PathVariable UUID userId,
+        @Parameter(description = "ID пользователя")
+        @PathVariable UUID userId,
 
-            @Parameter(description = "Номер страницы")
-            @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "Номер страницы")
+        @RequestParam(defaultValue = "0") int page,
 
-            @Parameter(description = "Размер страницы")
-            @RequestParam(defaultValue = "20") int size) {
-
+        @Parameter(description = "Размер страницы")
+        @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<LoginHistoryResponse> history = loginHistoryService.getUserLoginHistory(userId, pageable);
 
@@ -66,20 +65,19 @@ public class AdminLoginHistoryController {
      */
     @GetMapping("/user/{userId}/stats")
     @Operation(
-            summary = "Статистика входов пользователя",
-            description = "Получить статистику: общее количество входов, последний вход и т.д.",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Статистика входов пользователя",
+        description = "Получить статистику: общее количество входов, последний вход и т.д.",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<LoginHistoryStatsResponse> getUserLoginStats(
-            @Parameter(description = "ID пользователя")
-            @PathVariable UUID userId) {
-
+        @Parameter(description = "ID пользователя")
+        @PathVariable UUID userId) {
         long totalLogins = loginHistoryService.getTotalLogins(userId);
 
         LoginHistoryStatsResponse stats = LoginHistoryStatsResponse.builder()
-                .userId(userId)
-                .totalSuccessfulLogins(totalLogins)
-                .build();
+            .userId(userId)
+            .totalSuccessfulLogins(totalLogins)
+            .build();
 
         return ResponseEntity.ok(stats);
     }

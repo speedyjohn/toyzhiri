@@ -1,4 +1,4 @@
-package org.example.toy_zhiri.admin.dto;
+package org.example.toy_zhiri.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -9,13 +9,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO для сброса пароля пользователя администратором.
+ * DTO для смены пароля пользователем.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AdminResetPasswordRequest {
+public class ChangePasswordRequest {
+    @NotBlank(message = "Текущий пароль обязателен")
+    private String currentPassword;
+
     @NotBlank(message = "Новый пароль обязателен")
     @Size(min = 8, message = "Пароль должен содержать минимум 8 символов")
     @Pattern(

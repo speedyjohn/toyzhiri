@@ -17,8 +17,8 @@ import lombok.NoArgsConstructor;
 public class AdminChangeRoleRequest {
     @NotBlank(message = "Роль обязательна")
     @Pattern(
-            regexp = "^(USER|PARTNER|ADMIN)$",
-            message = "Роль должна быть одной из: USER, PARTNER, ADMIN"
+        regexp = "^(USER|PARTNER|ADMIN)$",
+        message = "Роль должна быть одной из: USER, PARTNER, ADMIN"
     )
     private String role;
 }

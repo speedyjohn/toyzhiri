@@ -41,8 +41,8 @@ public class AuthController {
      * @return RegisterResponse информация о зарегистрированном пользователе
      */
     @Operation(
-            summary = "Регистрация",
-            description = "Отправить запрос на регистрацию"
+        summary = "Регистрация",
+        description = "Отправить запрос на регистрацию"
     )
     @PostMapping("/register")
     public RegisterResponse register(@Valid @RequestBody RegisterRequest request) {
@@ -56,13 +56,14 @@ public class AuthController {
      * @return AuthResponse JWT токен для доступа
      */
     @Operation(
-            summary = "Авторизация",
-            description = "Отправить запрос на авторизацию"
+        summary = "Авторизация",
+        description = "Отправить запрос на авторизацию"
     )
     @PostMapping("/login")
     public AuthResponse login(
-            @Valid @RequestBody AuthRequest request,
-            HttpServletRequest httpRequest) {
+        @Valid @RequestBody AuthRequest request,
+        HttpServletRequest httpRequest)
+    {
         return authService.login(request, httpRequest);
     }
 
