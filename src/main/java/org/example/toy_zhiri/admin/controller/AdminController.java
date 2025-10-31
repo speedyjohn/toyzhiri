@@ -25,15 +25,14 @@ import java.util.UUID;
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin", description = "API для администраторов")
 public class AdminController {
-
     private final PartnerService partnerService;
     private final UserService userService;
 
     @GetMapping("/partners/pending")
     @Operation(
-            summary = "Получить заявки на рассмотрении",
-            description = "Список всех заявок со статусом PENDING",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Получить заявки на рассмотрении",
+        description = "Список всех заявок со статусом PENDING",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<List<PartnerResponse>> getPendingPartners() {
         List<PartnerResponse> partners = partnerService.getPendingPartners();
@@ -42,28 +41,26 @@ public class AdminController {
 
     @GetMapping("/partners/status/{status}")
     @Operation(
-            summary = "Получить заявки по статусу",
-            description = "Фильтр заявок по статусу: PENDING, APPROVED, REJECTED",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Получить заявки по статусу",
+        description = "Фильтр заявок по статусу: PENDING, APPROVED, REJECTED",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<List<PartnerResponse>> getPartnersByStatus(
-            @PathVariable PartnerStatus status) {
-
+        @PathVariable PartnerStatus status) {
         List<PartnerResponse> partners = partnerService.getAllPartnersByStatus(status);
         return ResponseEntity.ok(partners);
     }
 
     @PostMapping("/partners/{partnerId}/approve")
     @Operation(
-            summary = "Одобрить или отклонить заявку",
-            description = "Администратор может одобрить (approved=true) или отклонить (approved=false) заявку",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Одобрить или отклонить заявку",
+        description = "Администратор может одобрить (approved=true) или отклонить (approved=false) заявку",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<PartnerResponse> approvePartner(
-            @PathVariable UUID partnerId,
-            @Valid @RequestBody PartnerApprovalRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
-
+        @PathVariable UUID partnerId,
+        @Valid @RequestBody PartnerApprovalRequest request,
+        @AuthenticationPrincipal UserDetails userDetails) {
         UUID adminId = userService.getIdByEmail(userDetails.getUsername());
 
         PartnerResponse response = partnerService.approvePartner(partnerId, adminId, request);

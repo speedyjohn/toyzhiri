@@ -22,7 +22,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginHistory {
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;

@@ -13,7 +13,6 @@ import java.util.UUID;
  * Расширен интерфейсом JpaSpecificationExecutor для поддержки динамических запросов.
  */
 public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificationExecutor<User> {
-
     /**
      * Находит пользователя по email.
      *

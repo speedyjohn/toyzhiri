@@ -43,8 +43,8 @@ public class PartnerController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<PartnerResponse> registerAsPartner(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody PartnerRegistrationRequest request) {
+        @AuthenticationPrincipal UserDetails userDetails,
+        @Valid @RequestBody PartnerRegistrationRequest request) {
         User user = userService.getUserByEmail(userDetails.getUsername()).orElseThrow(() -> new RuntimeException("Пользователь не найден"));
         PartnerResponse response = partnerService.registerPartner(user.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

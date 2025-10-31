@@ -14,7 +14,6 @@ import java.util.UUID;
  */
 @Repository
 public interface TokenBlacklistRepository extends JpaRepository<TokenBlacklist, UUID> {
-
     /**
      * Проверяет, находится ли токен в черном списке.
      *

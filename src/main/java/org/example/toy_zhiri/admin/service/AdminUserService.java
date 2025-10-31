@@ -21,7 +21,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AdminUserService {
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -58,9 +57,9 @@ public class AdminUserService {
         if (search != null && !search.isBlank()) {
             spec = spec.and((root, query, cb) ->
                     cb.or(
-                            cb.like(cb.lower(root.get("email")), "%" + search.toLowerCase() + "%"),
-                            cb.like(cb.lower(root.get("firstName")), "%" + search.toLowerCase() + "%"),
-                            cb.like(cb.lower(root.get("lastName")), "%" + search.toLowerCase() + "%")
+                        cb.like(cb.lower(root.get("email")), "%" + search.toLowerCase() + "%"),
+                        cb.like(cb.lower(root.get("firstName")), "%" + search.toLowerCase() + "%"),
+                        cb.like(cb.lower(root.get("lastName")), "%" + search.toLowerCase() + "%")
                     ));
         }
 
@@ -271,11 +270,6 @@ public class AdminUserService {
      * - Данные остаются в БД
      * - Можно восстановить позже
      *
-     * Для реализации блокировки нужно:
-     * 1. Добавить поле isActive в таблицу users (миграция БД)
-     * 2. Добавить поле isActive в сущность User
-     * 3. Проверять этот флаг при аутентификации
-     *
      * @param userId идентификатор пользователя
      * @param request статус активности
      * @return обновленная информация о пользователе
@@ -296,15 +290,6 @@ public class AdminUserService {
     /**
      * Удаляет пользователя из системы (hard delete).
      *
-     * Полное удаление пользователя:
-     * - Удаляются все связанные данные (cascade delete)
-     * - Партнерские заявки удалятся автоматически (ON DELETE CASCADE в БД)
-     * - Операция необратима!
-     *
-     * Безопасность:
-     * - Нельзя удалить самого себя (опционально)
-     * - Логируется для аудита
-     *
      * @param userId идентификатор пользователя
      * @return сообщение об успешном удалении
      * @throws RuntimeException если пользователь не найден
@@ -317,8 +302,8 @@ public class AdminUserService {
         String userEmail = user.getEmail();
         userRepository.delete(user);
 
-        // TODO: Логировать удаление для аудита
-        // TODO: Отправить уведомление пользователю (если применимо)
+        // TODO: Добавить в login history?
+        // TODO: Отправить email о удалении аккаунта
 
         return MessageResponse.builder()
                 .message("Пользователь " + userEmail + " успешно удален")
