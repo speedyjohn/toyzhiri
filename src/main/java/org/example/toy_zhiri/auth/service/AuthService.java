@@ -3,19 +3,20 @@ package org.example.toy_zhiri.auth.service;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.example.toy_zhiri.auth.dto.AuthRequest;
-import org.example.toy_zhiri.auth.dto.AuthResponse;
-import org.example.toy_zhiri.auth.dto.RegisterRequest;
-import org.example.toy_zhiri.auth.dto.RegisterResponse;
+import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.auth.dto.*;
 import org.example.toy_zhiri.auth.security.JwtTokenProvider;
 import org.example.toy_zhiri.auth.service.LoginHistoryService;
 import org.example.toy_zhiri.user.entity.User;
 import org.example.toy_zhiri.user.enums.UserRole;
 import org.example.toy_zhiri.user.repository.UserRepository;
+import org.example.toy_zhiri.user.service.UserService;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,8 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final LoginHistoryService loginHistoryService;
+    private final TokenBlacklistService tokenBlacklistService;
+    private final UserService userService;
 
     /**
      * Регистрирует нового пользователя в системе.
@@ -141,5 +144,28 @@ public class AuthService {
             }
             throw new RuntimeException("Неверный email или пароль");
         }
+    }
+
+    public LogoutResponse logout(UserDetails userDetails, HttpServletRequest httpRequest) {
+        // Извлекаем токен из заголовка
+        String header = httpRequest.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            String token = header.substring(7);
+
+            // Добавляем токен в blacklist
+            tokenBlacklistService.blacklistToken(token);
+
+            // Логируем выход
+            User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
+            loginHistoryService.logLogout(user, httpRequest);
+
+            return LogoutResponse.builder()
+                    .token(token)
+                    .build();
+        }
+
+        return LogoutResponse.builder()
+                .token("Invalid token")
+                .build();
     }
 }

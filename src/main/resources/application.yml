@@ -5,7 +5,7 @@ spring:
     password: password
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -15,6 +15,11 @@ spring:
     locations: classpath:db/migration
   config:
     import: optional:classpath:application-local.yml
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
 
 
 server:
@@ -24,3 +29,6 @@ app:
   jwt:
     secret: key
     expiration-ms: 86400000
+  upload:
+    dir: uploads
+    max-size: 5242880
