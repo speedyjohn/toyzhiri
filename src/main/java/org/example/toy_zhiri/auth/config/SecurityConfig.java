@@ -47,11 +47,15 @@ public class SecurityConfig {
                                 "/api/v1/auth/register",
                                 "/error",
                                 "/swagger-ui/**",
+                                "/api/v1/services/**",
+                                "/api/v1/services/categories",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/users/**").authenticated()
+                        .requestMatchers("/api/v1/favorites/**").authenticated()
+                        .requestMatchers("/api/v1/cart/**").authenticated()
 
                         .anyRequest().authenticated()
                 )

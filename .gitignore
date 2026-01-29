@@ -13,3 +13,7 @@ target/
 *.bak
 *.swp
 .DS_Store
+
+# === Some local files ===
+todo
+src/main/resources/application-local.yml
