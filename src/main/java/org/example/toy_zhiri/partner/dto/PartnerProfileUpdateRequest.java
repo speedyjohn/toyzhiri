@@ -1,7 +1,6 @@
 package org.example.toy_zhiri.partner.dto;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -10,46 +9,35 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO для расширенного запроса регистрации в качестве партнера.
+ * DTO для обновления профиля партнера.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PartnerRegistrationRequest {
-    @NotBlank(message = "БИН обязателен для заполнения")
-    @Size(min = 12, max = 12, message = "БИН должен содержать 12 цифр")
-    @Pattern(regexp = "\\d{12}", message = "БИН должен содержать только цифры")
-    private String bin;
-
-    // Новые обязательные поля
-    @NotBlank(message = "Название компании обязательно")
+public class PartnerProfileUpdateRequest {
     @Size(max = 255, message = "Название компании не должно превышать 255 символов")
     private String companyName;
 
-    @NotBlank(message = "Город обязателен")
+    @Size(max = 5000, message = "Описание не должно превышать 5000 символов")
+    private String description;
+
+    private String address;
+
     @Size(max = 100, message = "Город не должен превышать 100 символов")
     private String city;
 
-    @NotBlank(message = "Телефон обязателен")
+    @Size(max = 100, message = "Регион не должен превышать 100 символов")
+    private String region;
+
     @Pattern(
             regexp = "^77\\d{9}$",
             message = "Неверный формат телефона. Ожидается формат: 77XXXXXXXXX"
     )
     private String phone;
 
-    @NotBlank(message = "Email обязателен")
     @Email(message = "Неверный формат email")
     private String email;
-
-    // Опциональные поля
-    @Size(max = 5000, message = "Описание не должно превышать 5000 символов")
-    private String description;
-
-    private String address;
-
-    @Size(max = 100, message = "Регион не должен превышать 100 символов")
-    private String region;
 
     @Pattern(
             regexp = "^77\\d{9}$",

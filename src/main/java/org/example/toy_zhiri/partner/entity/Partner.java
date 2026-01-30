@@ -34,6 +34,43 @@ public class Partner {
     @Column(name = "bin", length = 12, unique = true, nullable = false)
     private String bin;
 
+    @Column(name = "company_name", nullable = false)
+    private String companyName;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "city")
+    private String city;
+
+    @Column(name = "region")
+    private String region;
+
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "whatsapp")
+    private String whatsapp;
+
+    @Column(name = "telegram")
+    private String telegram;
+
+    @Column(name = "instagram")
+    private String instagram;
+
+    @Column(name = "website")
+    private String website;
+
+    // 🖼 Медиа
+    @Column(name = "logo_url")
+    private String logoUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private PartnerStatus status = PartnerStatus.PENDING;
