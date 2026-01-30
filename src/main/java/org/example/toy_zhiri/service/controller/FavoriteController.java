@@ -29,9 +29,9 @@ public class FavoriteController {
 
     @PostMapping("/{serviceId}")
     @Operation(
-            summary = "Добавить в избранное",
-            description = "Добавить услугу в список избранных",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Добавить в избранное",
+        description = "Добавить услугу в список избранных",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<MessageResponse> addToFavorites(
             @PathVariable UUID serviceId,
@@ -43,9 +43,9 @@ public class FavoriteController {
 
     @DeleteMapping("/{serviceId}")
     @Operation(
-            summary = "Удалить из избранного",
-            description = "Удалить услугу из списка избранных",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Удалить из избранного",
+        description = "Удалить услугу из списка избранных",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<MessageResponse> removeFromFavorites(
             @PathVariable UUID serviceId,
@@ -57,9 +57,9 @@ public class FavoriteController {
 
     @GetMapping
     @Operation(
-            summary = "Мои избранные",
-            description = "Получить список избранных услуг",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Мои избранные",
+        description = "Получить список избранных услуг",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<Page<ServiceResponse>> getFavorites(
             @Parameter(description = "Номер страницы")

@@ -1,12 +1,14 @@
 package org.example.toy_zhiri.service.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.toy_zhiri.service.dto.ServiceFilterRequest;
 import org.example.toy_zhiri.service.dto.ServiceResponse;
 import org.example.toy_zhiri.service.entity.Service;
 import org.example.toy_zhiri.service.entity.ServiceImage;
 import org.example.toy_zhiri.service.repository.FavoriteRepository;
 import org.example.toy_zhiri.service.repository.CartItemRepository;
 import org.example.toy_zhiri.service.repository.ServiceRepository;
+import org.example.toy_zhiri.service.specification.ServiceSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,6 +25,9 @@ public class ServiceService {
     private final FavoriteRepository favoriteRepository;
     private final CartItemRepository cartItemRepository;
 
+    /**
+     * Получение услуг с базовой фильтрацией (старый метод, оставлен для обратной совместимости).
+     */
     public Page<ServiceResponse> getAllServices(UUID categoryId, UUID userId, Pageable pageable) {
         Page<Service> services;
 
@@ -32,6 +37,30 @@ public class ServiceService {
             services = serviceRepository.findByIsActiveTrueAndIsApprovedTrue(pageable);
         }
 
+        return services.map(service -> mapToResponse(service, userId));
+    }
+
+    /**
+     * Получение услуг с расширенной фильтрацией.
+     * Поддерживает комбинацию всех фильтров: цена, рейтинг, город, тип услуги, доступные даты.
+     *
+     * @param filter объект с параметрами фильтрации
+     * @param userId ID текущего пользователя (для определения избранного и корзины)
+     * @param pageable параметры пагинации
+     * @return страница с отфильтрованными услугами
+     */
+    public Page<ServiceResponse> getFilteredServices(
+            ServiceFilterRequest filter,
+            UUID userId,
+            Pageable pageable) {
+
+        // Создаём спецификацию на основе фильтров
+        Specification<Service> spec = ServiceSpecification.createSpecification(filter);
+
+        // Выполняем запрос с фильтрацией
+        Page<Service> services = serviceRepository.findAll(spec, pageable);
+
+        // Преобразуем в DTO
         return services.map(service -> mapToResponse(service, userId));
     }
 

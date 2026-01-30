@@ -27,20 +27,19 @@ public class AdminCategoryController {
 
     @PostMapping
     @Operation(
-            summary = "Создать категорию",
-            description = "Создание новой категории услуг",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Создать категорию",
+        description = "Создание новой категории услуг",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
-    public ResponseEntity<CategoryResponse> createCategory(
-            @Valid @RequestBody CreateCategoryRequest request) {
+    public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CreateCategoryRequest request) {
         return ResponseEntity.status(201).body(adminCategoryService.createCategory(request));
     }
 
     @PutMapping("/{categoryId}")
     @Operation(
-            summary = "Редактировать категорию",
-            description = "Обновление существующей категории",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Редактировать категорию",
+        description = "Обновление существующей категории",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<CategoryResponse> updateCategory(
             @PathVariable UUID categoryId,
@@ -50,9 +49,9 @@ public class AdminCategoryController {
 
     @DeleteMapping("/{categoryId}")
     @Operation(
-            summary = "Удалить категорию",
-            description = "Удаление категории (будьте осторожны, удаляются и все связанные услуги)",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Удалить категорию",
+        description = "Удаление категории (будьте осторожны, удаляются и все связанные услуги)",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<MessageResponse> deleteCategory(
             @PathVariable UUID categoryId) {
@@ -61,9 +60,9 @@ public class AdminCategoryController {
 
     @GetMapping
     @Operation(
-            summary = "Все категории",
-            description = "Получить список всех категорий (включая неактивные)",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Все категории",
+        description = "Получить список всех категорий (включая неактивные)",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<List<CategoryResponse>> getAllCategories() {
         return ResponseEntity.ok(adminCategoryService.getAllCategories());
@@ -71,9 +70,9 @@ public class AdminCategoryController {
 
     @GetMapping("/{categoryId}")
     @Operation(
-            summary = "Получить категорию по ID",
-            description = "Детальная информация о категории",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Получить категорию по ID",
+        description = "Детальная информация о категории",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<CategoryResponse> getCategoryById(
             @PathVariable UUID categoryId) {

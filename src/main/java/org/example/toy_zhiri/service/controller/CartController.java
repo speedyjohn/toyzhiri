@@ -27,9 +27,9 @@ public class CartController {
 
     @PostMapping
     @Operation(
-            summary = "Добавить в корзину",
-            description = "Добавить услугу в корзину или обновить существующую",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Добавить в корзину",
+        description = "Добавить услугу в корзину или обновить существующую",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<MessageResponse> addToCart(
             @Valid @RequestBody AddToCartRequest request,
@@ -41,9 +41,9 @@ public class CartController {
 
     @DeleteMapping("/{serviceId}")
     @Operation(
-            summary = "Удалить из корзины",
-            description = "Удалить услугу из корзины",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Удалить из корзины",
+        description = "Удалить услугу из корзины",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<MessageResponse> removeFromCart(
             @PathVariable UUID serviceId,
@@ -55,9 +55,9 @@ public class CartController {
 
     @DeleteMapping
     @Operation(
-            summary = "Очистить корзину",
-            description = "Удалить все услуги из корзины",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Очистить корзину",
+        description = "Удалить все услуги из корзины",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<MessageResponse> clearCart(
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -68,9 +68,9 @@ public class CartController {
 
     @GetMapping
     @Operation(
-            summary = "Моя корзина",
-            description = "Получить содержимое корзины с итоговой суммой",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Моя корзина",
+        description = "Получить содержимое корзины с итоговой суммой",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<CartResponse> getCart(
             @AuthenticationPrincipal UserDetails userDetails) {
