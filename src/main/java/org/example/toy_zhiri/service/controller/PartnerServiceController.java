@@ -34,9 +34,9 @@ public class PartnerServiceController {
 
     @PostMapping
     @Operation(
-            summary = "Создать услугу",
-            description = "Партнёр создаёт новую услугу (требует модерации админа)",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Создать услугу",
+        description = "Партнёр создаёт новую услугу (требует модерации админа)",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ServiceResponse> createService(
             @Valid @RequestBody CreateServiceRequest request,
@@ -48,9 +48,9 @@ public class PartnerServiceController {
 
     @PutMapping("/{serviceId}")
     @Operation(
-            summary = "Редактировать услугу",
-            description = "Обновить информацию об услуге",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Редактировать услугу",
+        description = "Обновить информацию об услуге",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ServiceResponse> updateService(
             @PathVariable UUID serviceId,
@@ -63,9 +63,9 @@ public class PartnerServiceController {
 
     @DeleteMapping("/{serviceId}")
     @Operation(
-            summary = "Удалить услугу",
-            description = "Удалить свою услугу",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Удалить услугу",
+        description = "Удалить свою услугу",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<MessageResponse> deleteService(
             @PathVariable UUID serviceId,
@@ -77,9 +77,9 @@ public class PartnerServiceController {
 
     @GetMapping
     @Operation(
-            summary = "Мои услуги",
-            description = "Получить список всех своих услуг",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Мои услуги",
+        description = "Получить список всех своих услуг",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<Page<ServiceResponse>> getMyServices(
             @Parameter(description = "Номер страницы")
