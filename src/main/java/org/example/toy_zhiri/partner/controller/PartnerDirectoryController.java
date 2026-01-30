@@ -6,10 +6,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.toy_zhiri.partner.dto.CompletePartnerProfileRequest;
 import org.example.toy_zhiri.partner.dto.PartnerProfileResponse;
 import org.example.toy_zhiri.partner.dto.PartnerProfileUpdateRequest;
-import org.example.toy_zhiri.partner.dto.UpdatePartnerProfileRequest;
 import org.example.toy_zhiri.partner.enums.PartnerStatus;
 import org.example.toy_zhiri.partner.service.PartnerDirectoryService;
 import org.example.toy_zhiri.user.service.UserService;
@@ -96,21 +94,6 @@ public class PartnerDirectoryController {
         UUID userId = userService.getIdByEmail(userDetails.getUsername());
         PartnerProfileResponse profile = partnerDirectoryService.getPartnerProfileByUserId(userId);
         return ResponseEntity.ok(profile);
-    }
-
-    @GetMapping("/my-profile/is-complete")
-    @PreAuthorize("hasRole('PARTNER')")
-    @Operation(
-            summary = "Проверить заполненность профиля",
-            description = "Проверяет, заполнены ли все обязательные поля профиля",
-            security = @SecurityRequirement(name = "bearerAuth")
-    )
-    public ResponseEntity<Boolean> isProfileComplete(
-            @AuthenticationPrincipal UserDetails userDetails) {
-
-        UUID userId = userService.getIdByEmail(userDetails.getUsername());
-        boolean isComplete = partnerDirectoryService.isProfileComplete(userId);
-        return ResponseEntity.ok(isComplete);
     }
 
     @PutMapping("/my-profile")

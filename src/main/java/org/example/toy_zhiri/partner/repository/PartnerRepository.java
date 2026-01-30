@@ -3,6 +3,7 @@ package org.example.toy_zhiri.partner.repository;
 import org.example.toy_zhiri.partner.entity.Partner;
 import org.example.toy_zhiri.partner.enums.PartnerStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.UUID;
  * Репозиторий для работы с сущностями Partner.
  */
 @Repository
-public interface PartnerRepository extends JpaRepository<Partner, UUID> {
+public interface PartnerRepository extends JpaRepository<Partner, UUID>, JpaSpecificationExecutor<Partner> {
     /**
      * Находит партнера по идентификатору пользователя.
      *

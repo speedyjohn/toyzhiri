@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.toy_zhiri.auth.service.AuthService;
 import org.example.toy_zhiri.partner.dto.PartnerRegistrationRequest;
 import org.example.toy_zhiri.partner.dto.PartnerResponse;
 import org.example.toy_zhiri.partner.service.PartnerService;
@@ -13,18 +12,18 @@ import org.example.toy_zhiri.user.entity.User;
 import org.example.toy_zhiri.user.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * Контроллер для управления заявками на партнерство.
+ * Для работы с профилями партнеров используйте PartnerDirectoryController.
  */
 @RestController
 @RequestMapping("/api/v1/partner")
 @RequiredArgsConstructor
-@Tag(name = "Partner", description = "API для работы с партнерами")
+@Tag(name = "Partner", description = "API для работы с заявками на партнерство")
 public class PartnerController {
     private final PartnerService partnerService;
     private final UserService userService;
@@ -38,15 +37,17 @@ public class PartnerController {
      */
     @PostMapping("/register")
     @Operation(
-        summary = "Подать заявку на партнерство",
-        description = "Зарегистрированный пользователь может подать заявку на статус партнера",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Подать заявку на партнерство",
+            description = "Зарегистрированный пользователь может подать заявку на статус партнера с заполнением всех необходимых данных профиля",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<PartnerResponse> registerAsPartner(
-        @AuthenticationPrincipal UserDetails userDetails,
-        @Valid @RequestBody PartnerRegistrationRequest request) {
-        User user = userService.getUserByEmail(userDetails.getUsername()).orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody PartnerRegistrationRequest request) {
+
+        User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         PartnerResponse response = partnerService.registerPartner(user.getId(), request);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -58,14 +59,16 @@ public class PartnerController {
      */
     @GetMapping("/my-application")
     @Operation(
-        summary = "Получить свою заявку на партнерство",
-        description = "Просмотр статуса своей заявки",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Получить свою заявку на партнерство",
+            description = "Просмотр статуса своей заявки на партнерство",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
-    public ResponseEntity<PartnerResponse> getMyApplication(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<PartnerResponse> getMyApplication(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         PartnerResponse response = partnerService.getPartnerByUserId(user.getId());
+
         return ResponseEntity.ok(response);
     }
-
 }
