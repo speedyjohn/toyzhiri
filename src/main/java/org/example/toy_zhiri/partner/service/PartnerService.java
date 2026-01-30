@@ -28,10 +28,10 @@ public class PartnerService {
     private final UserRepository userRepository;
 
     /**
-     * Регистрирует новую заявку на партнерство.
+     * Регистрирует новую заявку на партнерство с полным профилем.
      *
      * @param userId идентификатор пользователя
-     * @param request данные для регистрации партнера
+     * @param request данные для регистрации партнера (включая обязательные поля)
      * @return PartnerResponse информация о созданной заявке
      * @throws RuntimeException если пользователь не найден, заявка уже существует или БИН уже используется
      */
@@ -51,6 +51,18 @@ public class PartnerService {
         Partner partner = Partner.builder()
                 .user(user)
                 .bin(request.getBin())
+                .companyName(request.getCompanyName())
+                .description(request.getDescription())
+                .address(request.getAddress())
+                .city(request.getCity())
+                .region(request.getRegion())
+                .phone(request.getPhone())
+                .email(request.getEmail())
+                .whatsapp(request.getWhatsapp())
+                .telegram(request.getTelegram())
+                .instagram(request.getInstagram())
+                .website(request.getWebsite())
+                .logoUrl(request.getLogoUrl())
                 .status(PartnerStatus.PENDING)
                 .build();
 

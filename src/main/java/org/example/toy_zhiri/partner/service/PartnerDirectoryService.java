@@ -160,22 +160,6 @@ public class PartnerDirectoryService {
     }
 
     /**
-     * Проверить, заполнен ли профиль партнера полностью.
-     *
-     * @param userId идентификатор пользователя
-     * @return true если все обязательные поля заполнены
-     */
-    public boolean isProfileComplete(UUID userId) {
-        Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнер не найден"));
-
-        return partner.getCompanyName() != null &&
-                partner.getCity() != null &&
-                partner.getPhone() != null &&
-                partner.getEmail() != null;
-    }
-
-    /**
      * Преобразует сущность Partner в детальный DTO.
      */
     private PartnerProfileResponse mapToProfileResponse(Partner partner) {
