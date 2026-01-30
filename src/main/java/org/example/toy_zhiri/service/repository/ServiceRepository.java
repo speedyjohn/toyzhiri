@@ -16,4 +16,5 @@ public interface ServiceRepository extends JpaRepository<Service, UUID>, JpaSpec
     Page<Service> findByCategoryIdAndIsActiveTrueAndIsApprovedTrue(UUID categoryId, Pageable pageable);
     Page<Service> findByPartnerIdAndIsActiveTrue(UUID partnerId, Pageable pageable);
     List<Service> findByPartnerId(UUID partnerId);
+    List<Service> findByIsApprovedFalse();
 }
