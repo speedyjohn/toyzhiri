@@ -1,0 +1,10 @@
+# an example of application-local configuration file. Data should be replaced with real values
+spring:
+  datasource:
+    username: user
+    password: password
+
+app:
+  jwt:
+    secret: secret
+    expiration-ms: 86400000
