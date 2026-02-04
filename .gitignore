@@ -17,3 +17,5 @@ target/
 # === Some local files ===
 todo
 src/main/resources/application-local.yml
+.env
+uploads/

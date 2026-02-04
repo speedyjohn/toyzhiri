@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # PostgreSQL база данных
+  postgres:
+    image: postgres:16-alpine
+    container_name: toyzhiri-postgres
+    environment:
+      POSTGRES_DB: toyzhiri
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - toyzhiri-network
+    restart: unless-stopped
+
+  # Spring Boot приложение
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: toyzhiri-app
+    environment:
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/toyzhiri
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      # JWT
+      APP_JWT_SECRET: ${JWT_SECRET}
+      APP_JWT_EXPIRATION_MS: 86400000
+
+      # Upload
+      APP_UPLOAD_DIR: /app/uploads
+      APP_UPLOAD_MAX_SIZE: 5242880
+
+      # Server
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - postgres
+    networks:
+      - toyzhiri-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  toyzhiri-network:
+    driver: bridge
