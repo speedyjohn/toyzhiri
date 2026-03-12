@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.toy_zhiri.service.enums.SortType;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,6 +32,7 @@ public class ServiceResponse {
     private BigDecimal rating;
     private Integer reviewsCount;
     private Integer viewsCount;
+    private Integer bookingsCount;
     private String thumbnail;
     private List<String> images;
     private Boolean isFavorite;

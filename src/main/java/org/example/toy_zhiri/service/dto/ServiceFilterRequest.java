@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.toy_zhiri.service.enums.SortType;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * DTO для фильтрации услуг.
+ * DTO для фильтрации и сортировки услуг.
  * Поддерживает комбинацию всех параметров фильтрации.
  *
  * Используется с @ModelAttribute в контроллере,
@@ -62,4 +63,7 @@ public class ServiceFilterRequest {
 
     @Parameter(description = "Минимальное количество отзывов")
     private Integer minReviews;
+
+    @Parameter(description = "Тип сортировки: POPULARITY (по умолчанию), PRICE_ASC, PRICE_DESC, RATING")
+    private SortType sortType;
 }

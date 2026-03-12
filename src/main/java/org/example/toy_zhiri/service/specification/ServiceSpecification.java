@@ -2,9 +2,12 @@ package org.example.toy_zhiri.service.specification;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Subquery;
 import org.example.toy_zhiri.service.dto.ServiceFilterRequest;
 import org.example.toy_zhiri.service.entity.Service;
+import org.example.toy_zhiri.service.entity.ServiceAvailability;
 import org.example.toy_zhiri.service.entity.ServiceCategory;
+import org.example.toy_zhiri.service.enums.AvailabilityStatus;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
@@ -128,10 +131,7 @@ public class ServiceSpecification {
 
             // Фильтр по наличию изображений
             if (filter.getHasImages() != null && filter.getHasImages()) {
-                // Используем exist subquery для проверки наличия изображений
-                predicates.add(
-                        criteriaBuilder.isNotEmpty(root.get("images"))
-                );
+                predicates.add(criteriaBuilder.isNotEmpty(root.get("images")));
             }
 
             // Фильтр по минимальному количеству отзывов
@@ -144,20 +144,40 @@ public class ServiceSpecification {
                 );
             }
 
-            // TODO: Фильтр по доступным датам
-            // Для этого потребуется создать отдельную таблицу calendar/availability
-            // или хранить JSON с занятыми датами
-            // Пока оставляем как комментарий для будущей реализации
-            /*
+            // Фильтр по одной доступной дате.
+            // Услуга попадает в результат, если в service_availability есть запись
+            // с этой датой и статусом AVAILABLE.
             if (filter.getAvailableDate() != null) {
-                // Проверка доступности конкретной даты
-                // Здесь должна быть логика проверки календаря партнёра
+                Subquery<Long> subquery = query.subquery(Long.class);
+                var availRoot = subquery.from(ServiceAvailability.class);
+                subquery.select(criteriaBuilder.count(availRoot))
+                        .where(
+                                criteriaBuilder.equal(availRoot.get("service"), root),
+                                criteriaBuilder.equal(availRoot.get("date"), filter.getAvailableDate()),
+                                criteriaBuilder.equal(
+                                        availRoot.get("status"),
+                                        AvailabilityStatus.AVAILABLE
+                                )
+                        );
+                predicates.add(criteriaBuilder.greaterThan(subquery, 0L));
             }
 
+            // Фильтр по нескольким доступным датам.
+            // Услуга попадает в результат, если хотя бы одна из дат помечена AVAILABLE.
             if (filter.getAvailableDates() != null && !filter.getAvailableDates().isEmpty()) {
-                // Проверка доступности хотя бы одной из дат
+                Subquery<Long> subquery = query.subquery(Long.class);
+                var availRoot = subquery.from(ServiceAvailability.class);
+                subquery.select(criteriaBuilder.count(availRoot))
+                        .where(
+                                criteriaBuilder.equal(availRoot.get("service"), root),
+                                availRoot.get("date").in(filter.getAvailableDates()),
+                                criteriaBuilder.equal(
+                                        availRoot.get("status"),
+                                        AvailabilityStatus.AVAILABLE
+                                )
+                        );
+                predicates.add(criteriaBuilder.greaterThan(subquery, 0L));
             }
-            */
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
@@ -190,8 +210,8 @@ public class ServiceSpecification {
      * Спецификация для фильтрации по диапазону цен.
      */
     public static Specification<Service> hasPriceBetween(
-        java.math.BigDecimal minPrice,
-        java.math.BigDecimal maxPrice) {
+            java.math.BigDecimal minPrice,
+            java.math.BigDecimal maxPrice) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 

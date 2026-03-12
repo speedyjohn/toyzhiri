@@ -2,27 +2,21 @@ package org.example.toy_zhiri.service.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.service.dto.CategoryResponse;
 import org.example.toy_zhiri.service.dto.ServiceFilterRequest;
+import org.example.toy_zhiri.service.dto.ServicePageResponse;
 import org.example.toy_zhiri.service.dto.ServiceResponse;
+import org.example.toy_zhiri.service.enums.SortType;
 import org.example.toy_zhiri.service.service.CategoryService;
 import org.example.toy_zhiri.service.service.ServiceService;
 import org.example.toy_zhiri.user.service.UserService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,10 +40,11 @@ public class ServiceController {
 
     @GetMapping
     @Operation(
-            summary = "Получить список услуг (базовая фильтрация)",
-            description = "Получение каталога услуг с базовой фильтрацией и пагинацией"
+            summary = "Получить список услуг",
+            description = "Получение каталога услуг с базовой фильтрацией и пагинацией. " +
+                    "Сортировка по умолчанию — POPULARITY (по количеству бронирований и просмотров)."
     )
-    public ResponseEntity<Page<ServiceResponse>> getServices(
+    public ResponseEntity<ServicePageResponse> getServices(
             @Parameter(description = "ID категории для фильтрации")
             @RequestParam(required = false) UUID categoryId,
 
@@ -59,27 +54,25 @@ public class ServiceController {
             @Parameter(description = "Размер страницы")
             @RequestParam(defaultValue = "20") int size,
 
-            @Parameter(description = "Поле сортировки")
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-
-            @Parameter(description = "Направление сортировки")
-            @RequestParam(defaultValue = "DESC") Sort.Direction sortDirection,
-
             @AuthenticationPrincipal UserDetails userDetails) {
 
         UUID userId = userDetails != null ? userService.getIdByEmail(userDetails.getUsername()) : null;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        ServiceFilterRequest filter = ServiceFilterRequest.builder()
+                .categoryId(categoryId)
+                .sortType(SortType.POPULARITY)
+                .build();
 
-        return ResponseEntity.ok(serviceService.getAllServices(categoryId, userId, pageable));
+        return ResponseEntity.ok(serviceService.getFilteredServices(filter, userId, page, size));
     }
 
     @GetMapping("/filter")
     @Operation(
-        summary = "Получить список услуг с расширенными фильтрами",
-        description = "Получение каталога услуг с поддержкой комбинации всех фильтров: " +
-                "цена, рейтинг, город, тип услуги, поиск по ключевым словам"
+            summary = "Получить список услуг с расширенными фильтрами",
+            description = "Получение каталога услуг с поддержкой комбинации всех фильтров и сортировки. " +
+                    "Порядок обработки: фильтры → сортировка → пагинация. " +
+                    "Доступные значения sortType: POPULARITY, PRICE_ASC, PRICE_DESC, RATING."
     )
-    public ResponseEntity<Page<ServiceResponse>> getFilteredServices(
+    public ResponseEntity<ServicePageResponse> getFilteredServices(
             @ModelAttribute ServiceFilterRequest filter,
 
             @Parameter(description = "Номер страницы")
@@ -88,24 +81,16 @@ public class ServiceController {
             @Parameter(description = "Размер страницы")
             @RequestParam(defaultValue = "20") int size,
 
-            @Parameter(description = "Поле сортировки")
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-
-            @Parameter(description = "Направление сортировки")
-            @RequestParam(defaultValue = "DESC") Sort.Direction sortDirection,
-
             @AuthenticationPrincipal UserDetails userDetails) {
 
         UUID userId = userDetails != null ? userService.getIdByEmail(userDetails.getUsername()) : null;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-
-        return ResponseEntity.ok(serviceService.getFilteredServices(filter, userId, pageable));
+        return ResponseEntity.ok(serviceService.getFilteredServices(filter, userId, page, size));
     }
 
     @GetMapping("/{serviceId}")
     @Operation(
-        summary = "Получить детали услуги",
-        description = "Подробная информация об услуге"
+            summary = "Получить детали услуги",
+            description = "Подробная информация об услуге"
     )
     public ResponseEntity<ServiceResponse> getServiceDetails(
             @PathVariable UUID serviceId,
