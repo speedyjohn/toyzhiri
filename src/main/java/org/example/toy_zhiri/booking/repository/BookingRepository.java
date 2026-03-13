@@ -18,7 +18,7 @@ import java.util.UUID;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
-    // --- Клиентские запросы ---
+    // Клиентские запросы
 
     Page<Booking> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
@@ -26,7 +26,33 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             UUID userId, BookingStatus status, Pageable pageable
     );
 
-    // --- Партнёрские запросы ---
+    /**
+     * История бронирований клиента с расширенной фильтрацией.
+     * Поддерживает фильтрацию по статусу, категории услуги, диапазону дат создания и мероприятия.
+     */
+    @Query("SELECT b FROM Booking b " +
+            "JOIN b.service s " +
+            "JOIN s.category c " +
+            "WHERE b.user.id = :userId " +
+            "AND (:status IS NULL OR b.status = :status) " +
+            "AND (:categoryId IS NULL OR c.id = :categoryId) " +
+            "AND (:createdFrom IS NULL OR CAST(b.createdAt AS date) >= :createdFrom) " +
+            "AND (:createdTo IS NULL OR CAST(b.createdAt AS date) <= :createdTo) " +
+            "AND (:eventFrom IS NULL OR b.eventDate >= :eventFrom) " +
+            "AND (:eventTo IS NULL OR b.eventDate <= :eventTo) " +
+            "ORDER BY b.createdAt DESC")
+    Page<Booking> findByUserIdWithFilters(
+            @Param("userId") UUID userId,
+            @Param("status") BookingStatus status,
+            @Param("categoryId") UUID categoryId,
+            @Param("createdFrom") LocalDate createdFrom,
+            @Param("createdTo") LocalDate createdTo,
+            @Param("eventFrom") LocalDate eventFrom,
+            @Param("eventTo") LocalDate eventTo,
+            Pageable pageable
+    );
+
+    // Партнёрские запросы
 
     Page<Booking> findByPartnerIdOrderByCreatedAtDesc(UUID partnerId, Pageable pageable);
 
@@ -38,7 +64,7 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             UUID partnerId, LocalDate from, LocalDate to
     );
 
-    // --- Проверка конфликтов по дате ---
+    // Проверка конфликтов по дате
 
     @Query("SELECT COUNT(b) > 0 FROM Booking b " +
             "WHERE b.service.id = :serviceId " +
@@ -49,7 +75,7 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             @Param("date") LocalDate date
     );
 
-    // --- Истекшие бронирования (для scheduled job) ---
+    // Истекшие бронирования (для scheduled job)
 
     List<Booking> findByStatusAndExpiresAtBefore(
             BookingStatus status, LocalDateTime now

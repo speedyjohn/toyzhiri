@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.toy_zhiri.booking.dto.BookingHistoryFilter;
 import org.example.toy_zhiri.booking.dto.BookingResponse;
 import org.example.toy_zhiri.booking.dto.CreateBookingRequest;
 import org.example.toy_zhiri.booking.enums.BookingStatus;
@@ -81,6 +82,29 @@ public class BookingController {
 
         UUID userId = userService.getIdByEmail(userDetails.getUsername());
         return ResponseEntity.ok(bookingService.getBookingById(userId, bookingId));
+    }
+
+    @GetMapping("/history")
+    @Operation(
+            summary = "История бронирований",
+            description = "Полная история бронирований клиента с расширенной фильтрацией: " +
+                    "по статусу, категории услуги, дате создания заказа и дате мероприятия.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<Page<BookingResponse>> getMyBookingHistory(
+            @ModelAttribute BookingHistoryFilter filter,
+
+            @Parameter(description = "Номер страницы")
+            @RequestParam(defaultValue = "0") int page,
+
+            @Parameter(description = "Размер страницы")
+            @RequestParam(defaultValue = "20") int size,
+
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        UUID userId = userService.getIdByEmail(userDetails.getUsername());
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(bookingService.getMyBookingHistory(userId, filter, pageable));
     }
 
     @PatchMapping("/{bookingId}/cancel")

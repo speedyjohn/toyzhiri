@@ -3,6 +3,7 @@ package org.example.toy_zhiri.booking.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.booking.dto.BookingHistoryFilter;
 import org.example.toy_zhiri.booking.dto.BookingResponse;
 import org.example.toy_zhiri.booking.dto.CreateBookingRequest;
 import org.example.toy_zhiri.booking.dto.RejectBookingRequest;
@@ -37,9 +38,7 @@ public class BookingService {
     private final PartnerRepository partnerRepository;
     private final ServiceAvailabilityRepository availabilityRepository;
 
-    // =========================================================
     // КЛИЕНТСКИЕ МЕТОДЫ
-    // =========================================================
 
     /**
      * Создаёт новое бронирование.
@@ -110,6 +109,29 @@ public class BookingService {
     }
 
     /**
+     * История бронирований клиента с расширенной фильтрацией.
+     * Поддерживает фильтрацию по статусу, категории, диапазону дат создания и мероприятия.
+     */
+    public Page<BookingResponse> getMyBookingHistory(
+            UUID userId,
+            BookingHistoryFilter filter,
+            Pageable pageable) {
+
+        Page<Booking> bookings = bookingRepository.findByUserIdWithFilters(
+                userId,
+                filter.getStatus(),
+                filter.getCategoryId(),
+                filter.getCreatedFrom(),
+                filter.getCreatedTo(),
+                filter.getEventFrom(),
+                filter.getEventTo(),
+                pageable
+        );
+
+        return bookings.map(this::mapToResponse);
+    }
+
+    /**
      * Возвращает детали конкретного бронирования.
      * Доступно только клиенту-владельцу.
      */
@@ -149,9 +171,7 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
-    // =========================================================
     // ПАРТНЁРСКИЕ МЕТОДЫ
-    // =========================================================
 
     /**
      * Возвращает список бронирований партнёра с опциональной фильтрацией по статусу.
@@ -251,9 +271,7 @@ public class BookingService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
-    // =========================================================
     // ПУБЛИЧНЫЕ МЕТОДЫ (доступны всем)
-    // =========================================================
 
     /**
      * Возвращает недоступные даты для услуги за указанный период.
@@ -334,6 +352,9 @@ public class BookingService {
                 .totalPrice(booking.getTotalPrice())
                 .rejectionReason(booking.getRejectionReason())
                 .extraParams(booking.getExtraParams())
+                .serviceUrl("/services/" + booking.getService().getSlug())
+                // TODO: заменить на реальный chatId после реализации модуля чата
+                .chatUrl(null)
                 .expiresAt(booking.getExpiresAt())
                 .confirmedAt(booking.getConfirmedAt())
                 .rejectedAt(booking.getRejectedAt())
