@@ -99,4 +99,22 @@ public class ServiceController {
         UUID userId = userDetails != null ? userService.getIdByEmail(userDetails.getUsername()) : null;
         return ResponseEntity.ok(serviceService.getServiceById(serviceId, userId));
     }
+    @GetMapping("/{serviceId}/unavailable-dates")
+    @Operation(
+            summary = "Недоступные даты услуги",
+            description = "Возвращает все даты, недоступные для бронирования за указанный период. " +
+                    "Объединяет даты заблокированные партнёром и занятые активными бронированиями. " +
+                    "Используется фронтендом для блокировки дат в календаре."
+    )
+    public ResponseEntity<UnavailableDatesResponse> getUnavailableDates(
+            @PathVariable UUID serviceId,
+
+            @Parameter(description = "Начало периода (YYYY-MM-DD)")
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+
+            @Parameter(description = "Конец периода (YYYY-MM-DD)")
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+
+        return ResponseEntity.ok(bookingService.getUnavailableDates(serviceId, from, to));
+    }
 }
