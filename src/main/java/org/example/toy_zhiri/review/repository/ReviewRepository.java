@@ -16,10 +16,11 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     boolean existsByBookingId(UUID bookingId);
 
-    Optional<Review> findByBookingIdAndUserId(UUID bookingId, UUID userId);
+    // Отзывы по услуге (только видимые) — с поддержкой любой сортировки через Pageable
+    Page<Review> findByServiceIdAndIsVisibleTrue(UUID serviceId, Pageable pageable);
 
-    // Публичные отзывы по услуге (только видимые)
-    Page<Review> findByServiceIdAndIsVisibleTrueOrderByCreatedAtDesc(UUID serviceId, Pageable pageable);
+    // Отзывы по партнёру (только видимые) — с поддержкой любой сортировки через Pageable
+    Page<Review> findByPartnerIdAndIsVisibleTrue(UUID partnerId, Pageable pageable);
 
     // Пересчёт среднего рейтинга по услуге
     @Query("SELECT AVG(CAST(r.rating AS double)) FROM Review r " +
@@ -29,6 +30,6 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
     // Количество видимых отзывов по услуге
     long countByServiceIdAndIsVisibleTrue(UUID serviceId);
 
-    // Отзывы клиента
+    // Отзывы клиента (его личная история)
     Page<Review> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 }

@@ -8,7 +8,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.review.dto.CreateReviewRequest;
 import org.example.toy_zhiri.review.dto.ReviewResponse;
+import org.example.toy_zhiri.review.dto.ReviewSummaryResponse;
 import org.example.toy_zhiri.review.dto.UpdateReviewRequest;
+import org.example.toy_zhiri.review.enums.ReviewSortType;
 import org.example.toy_zhiri.review.service.ReviewService;
 import org.example.toy_zhiri.user.service.UserService;
 import org.springframework.data.domain.Page;
@@ -53,7 +55,7 @@ public class ReviewController {
     @Operation(
             summary = "Редактировать отзыв",
             description = "Клиент может изменить текст, оценку и фото своего отзыва " +
-                    "в течение 24 часов после публикации. После истечения окна редактирование недоступно.",
+                    "в течение 24 часов после публикации.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ReviewResponse> updateReview(
@@ -89,10 +91,14 @@ public class ReviewController {
     @GetMapping("/service/{serviceId}")
     @Operation(
             summary = "Отзывы по услуге",
-            description = "Публичный список видимых отзывов по конкретной услуге. Доступен без авторизации."
+            description = "Публичный список видимых отзывов по конкретной услуге. " +
+                    "Сортировка: NEW (новые), BEST (лучшие), WORST (худшие)."
     )
     public ResponseEntity<Page<ReviewResponse>> getServiceReviews(
             @PathVariable UUID serviceId,
+
+            @Parameter(description = "Сортировка: NEW, BEST, WORST")
+            @RequestParam(defaultValue = "NEW") ReviewSortType sort,
 
             @Parameter(description = "Номер страницы")
             @RequestParam(defaultValue = "0") int page,
@@ -101,6 +107,39 @@ public class ReviewController {
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(reviewService.getServiceReviews(serviceId, pageable));
+        return ResponseEntity.ok(reviewService.getServiceReviews(serviceId, sort, pageable));
+    }
+
+    @GetMapping("/service/{serviceId}/summary")
+    @Operation(
+            summary = "Сводка рейтинга по услуге",
+            description = "Возвращает средний рейтинг и общее количество отзывов по услуге."
+    )
+    public ResponseEntity<ReviewSummaryResponse> getServiceReviewSummary(
+            @PathVariable UUID serviceId) {
+
+        return ResponseEntity.ok(reviewService.getServiceReviewSummary(serviceId));
+    }
+
+    @GetMapping("/partner/{partnerId}")
+    @Operation(
+            summary = "Отзывы по партнёру",
+            description = "Публичный список видимых отзывов по всем услугам партнёра. " +
+                    "Сортировка: NEW (новые), BEST (лучшие), WORST (худшие)."
+    )
+    public ResponseEntity<Page<ReviewResponse>> getPartnerReviews(
+            @PathVariable UUID partnerId,
+
+            @Parameter(description = "Сортировка: NEW, BEST, WORST")
+            @RequestParam(defaultValue = "NEW") ReviewSortType sort,
+
+            @Parameter(description = "Номер страницы")
+            @RequestParam(defaultValue = "0") int page,
+
+            @Parameter(description = "Размер страницы")
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(reviewService.getPartnerReviews(partnerId, sort, pageable));
     }
 }

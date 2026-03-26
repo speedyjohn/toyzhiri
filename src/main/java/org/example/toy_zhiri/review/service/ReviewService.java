@@ -7,14 +7,18 @@ import org.example.toy_zhiri.booking.enums.BookingStatus;
 import org.example.toy_zhiri.booking.repository.BookingRepository;
 import org.example.toy_zhiri.review.dto.CreateReviewRequest;
 import org.example.toy_zhiri.review.dto.ReviewResponse;
+import org.example.toy_zhiri.review.dto.ReviewSummaryResponse;
 import org.example.toy_zhiri.review.dto.UpdateReviewRequest;
 import org.example.toy_zhiri.review.entity.Review;
+import org.example.toy_zhiri.review.enums.ReviewSortType;
 import org.example.toy_zhiri.review.repository.ReviewRepository;
 import org.example.toy_zhiri.service.entity.Service;
 import org.example.toy_zhiri.service.repository.ServiceRepository;
 import org.example.toy_zhiri.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -25,13 +29,12 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class ReviewService {
+    private static final long EDIT_WINDOW_HOURS = 24;
 
     private final ReviewRepository reviewRepository;
     private final BookingRepository bookingRepository;
     private final ServiceRepository serviceRepository;
     private final UserRepository userRepository;
-    private static final long EDIT_WINDOW_HOURS = 24;
-
 
     /**
      * Клиент оставляет отзыв.
@@ -79,62 +82,9 @@ public class ReviewService {
     }
 
     /**
-     * Публичный список отзывов по услуге (только видимые, с пагинацией).
+     * Клиент редактирует свой отзыв.
+     * Редактирование доступно только в течение {@value EDIT_WINDOW_HOURS} часов после публикации.
      */
-    public Page<ReviewResponse> getServiceReviews(UUID serviceId, Pageable pageable) {
-        serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
-
-        return reviewRepository
-                .findByServiceIdAndIsVisibleTrueOrderByCreatedAtDesc(serviceId, pageable)
-                .map(this::mapToResponse);
-    }
-
-    /**
-     * Список отзывов клиента (его личная история).
-     */
-    public Page<ReviewResponse> getMyReviews(UUID userId, Pageable pageable) {
-        return reviewRepository
-                .findByUserIdOrderByCreatedAtDesc(userId, pageable)
-                .map(this::mapToResponse);
-    }
-
-    /**
-     * Пересчитывает rating и reviews_count в таблице services
-     * на основе актуальных видимых отзывов.
-     */
-    private void recalculateServiceRating(UUID serviceId) {
-        Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
-
-        double avg = reviewRepository.findAverageRatingByServiceId(serviceId)
-                .orElse(0.0);
-        long count = reviewRepository.countByServiceIdAndIsVisibleTrue(serviceId);
-
-        service.setRating(BigDecimal.valueOf(avg).setScale(2, RoundingMode.HALF_UP));
-        service.setReviewsCount((int) count);
-
-        serviceRepository.save(service);
-    }
-
-    private ReviewResponse mapToResponse(Review review) {
-        return ReviewResponse.builder()
-                .id(review.getId())
-                .bookingId(review.getBooking().getId())
-                .userId(review.getUser().getId())
-                .userFullName(review.getUser().getFullName())
-                .serviceId(review.getService().getId())
-                .serviceName(review.getService().getName())
-                .partnerId(review.getPartner().getId())
-                .partnerCompanyName(review.getPartner().getCompanyName())
-                .rating(review.getRating())
-                .comment(review.getComment())
-                .imageUrls(review.getImageUrls())
-                .createdAt(review.getCreatedAt())
-                .updatedAt(review.getUpdatedAt())
-                .build();
-    }
-
     @Transactional
     public ReviewResponse updateReview(UUID userId, UUID reviewId, UpdateReviewRequest request) {
         Review review = reviewRepository.findById(reviewId)
@@ -160,5 +110,166 @@ public class ReviewService {
         recalculateServiceRating(updated.getService().getId());
 
         return mapToResponse(updated);
+    }
+
+    /**
+     * Публичный список отзывов по услуге с поддержкой сортировки.
+     * Видимы только отзывы с is_visible = true.
+     */
+    public Page<ReviewResponse> getServiceReviews(UUID serviceId, ReviewSortType sortType, Pageable pageable) {
+        serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                buildSort(sortType)
+        );
+
+        return reviewRepository
+                .findByServiceIdAndIsVisibleTrue(serviceId, sortedPageable)
+                .map(this::mapToResponse);
+    }
+
+    /**
+     * Публичный список отзывов по партнёру с поддержкой сортировки.
+     * Агрегирует отзывы по всем услугам партнёра.
+     */
+    public Page<ReviewResponse> getPartnerReviews(UUID partnerId, ReviewSortType sortType, Pageable pageable) {
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                buildSort(sortType)
+        );
+
+        return reviewRepository
+                .findByPartnerIdAndIsVisibleTrue(partnerId, sortedPageable)
+                .map(this::mapToResponse);
+    }
+
+    /**
+     * Возвращает сводку рейтинга по услуге: средний рейтинг и количество отзывов.
+     */
+    public ReviewSummaryResponse getServiceReviewSummary(UUID serviceId) {
+        serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+
+        double avg = reviewRepository.findAverageRatingByServiceId(serviceId).orElse(0.0);
+        long count = reviewRepository.countByServiceIdAndIsVisibleTrue(serviceId);
+
+        return ReviewSummaryResponse.builder()
+                .averageRating(BigDecimal.valueOf(avg).setScale(1, RoundingMode.HALF_UP))
+                .totalReviews(count)
+                .build();
+    }
+
+    /**
+     * Список отзывов клиента (его личная история).
+     */
+    public Page<ReviewResponse> getMyReviews(UUID userId, Pageable pageable) {
+        return reviewRepository
+                .findByUserIdOrderByCreatedAtDesc(userId, pageable)
+                .map(this::mapToResponse);
+    }
+
+    // =========================================================
+    // ADMIN МЕТОДЫ
+    // =========================================================
+
+    /**
+     * Администратор скрывает отзыв (is_visible = false).
+     * Отзыв остаётся в БД, но не отображается публично.
+     */
+    @Transactional
+    public void hideReview(UUID reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+
+        review.setIsVisible(false);
+        reviewRepository.save(review);
+
+        recalculateServiceRating(review.getService().getId());
+    }
+
+    /**
+     * Администратор восстанавливает скрытый отзыв (is_visible = true).
+     */
+    @Transactional
+    public void showReview(UUID reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+
+        review.setIsVisible(true);
+        reviewRepository.save(review);
+
+        recalculateServiceRating(review.getService().getId());
+    }
+
+    /**
+     * Администратор полностью удаляет отзыв из БД.
+     */
+    @Transactional
+    public void deleteReview(UUID reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+
+        UUID serviceId = review.getService().getId();
+
+        reviewRepository.delete(review);
+
+        recalculateServiceRating(serviceId);
+    }
+
+    // =========================================================
+    // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
+    // =========================================================
+
+    /**
+     * Строит Sort на основе типа сортировки отзывов.
+     */
+    private Sort buildSort(ReviewSortType sortType) {
+        if (sortType == null) {
+            return Sort.by(Sort.Direction.DESC, "createdAt");
+        }
+        return switch (sortType) {
+            case BEST  -> Sort.by(Sort.Direction.DESC, "rating");
+            case WORST -> Sort.by(Sort.Direction.ASC,  "rating");
+            case NEW   -> Sort.by(Sort.Direction.DESC, "createdAt");
+        };
+    }
+
+    /**
+     * Пересчитывает rating и reviews_count в таблице services
+     * на основе актуальных видимых отзывов.
+     */
+    private void recalculateServiceRating(UUID serviceId) {
+        Service service = serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+
+        double avg = reviewRepository.findAverageRatingByServiceId(serviceId).orElse(0.0);
+        long count = reviewRepository.countByServiceIdAndIsVisibleTrue(serviceId);
+
+        service.setRating(BigDecimal.valueOf(avg).setScale(2, RoundingMode.HALF_UP));
+        service.setReviewsCount((int) count);
+
+        serviceRepository.save(service);
+    }
+
+    private ReviewResponse mapToResponse(Review review) {
+        return ReviewResponse.builder()
+                .id(review.getId())
+                .bookingId(review.getBooking().getId())
+                .userId(review.getUser().getId())
+                .userFullName(review.getUser().getFullName())
+                .serviceId(review.getService().getId())
+                .serviceName(review.getService().getName())
+                .partnerId(review.getPartner().getId())
+                .partnerCompanyName(review.getPartner().getCompanyName())
+                .rating(review.getRating())
+                .comment(review.getComment())
+                .imageUrls(review.getImageUrls())
+                .createdAt(review.getCreatedAt())
+                .updatedAt(review.getUpdatedAt())
+                .build();
     }
 }
