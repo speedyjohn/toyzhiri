@@ -7,6 +7,7 @@ import org.example.toy_zhiri.booking.enums.BookingStatus;
 import org.example.toy_zhiri.booking.repository.BookingRepository;
 import org.example.toy_zhiri.review.dto.CreateReviewRequest;
 import org.example.toy_zhiri.review.dto.ReviewResponse;
+import org.example.toy_zhiri.review.dto.UpdateReviewRequest;
 import org.example.toy_zhiri.review.entity.Review;
 import org.example.toy_zhiri.review.repository.ReviewRepository;
 import org.example.toy_zhiri.service.entity.Service;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Component
@@ -28,6 +30,8 @@ public class ReviewService {
     private final BookingRepository bookingRepository;
     private final ServiceRepository serviceRepository;
     private final UserRepository userRepository;
+    private static final long EDIT_WINDOW_HOURS = 24;
+
 
     /**
      * Клиент оставляет отзыв.
@@ -129,5 +133,32 @@ public class ReviewService {
                 .createdAt(review.getCreatedAt())
                 .updatedAt(review.getUpdatedAt())
                 .build();
+    }
+
+    @Transactional
+    public ReviewResponse updateReview(UUID userId, UUID reviewId, UpdateReviewRequest request) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+
+        if (!review.getUser().getId().equals(userId)) {
+            throw new RuntimeException("У вас нет доступа к этому отзыву");
+        }
+
+        if (review.getCreatedAt().plusHours(EDIT_WINDOW_HOURS).isBefore(LocalDateTime.now())) {
+            throw new RuntimeException(
+                    "Редактирование отзыва доступно только в течение " + EDIT_WINDOW_HOURS +
+                            " часов после публикации"
+            );
+        }
+
+        review.setRating(request.getRating());
+        review.setComment(request.getComment());
+        review.setImageUrls(request.getImageUrls());
+
+        Review updated = reviewRepository.save(review);
+
+        recalculateServiceRating(updated.getService().getId());
+
+        return mapToResponse(updated);
     }
 }

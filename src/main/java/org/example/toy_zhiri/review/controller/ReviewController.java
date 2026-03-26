@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.review.dto.CreateReviewRequest;
 import org.example.toy_zhiri.review.dto.ReviewResponse;
+import org.example.toy_zhiri.review.dto.UpdateReviewRequest;
 import org.example.toy_zhiri.review.service.ReviewService;
 import org.example.toy_zhiri.user.service.UserService;
 import org.springframework.data.domain.Page;
@@ -45,6 +46,23 @@ public class ReviewController {
 
         UUID userId = userService.getIdByEmail(userDetails.getUsername());
         return ResponseEntity.status(201).body(reviewService.createReview(userId, request));
+    }
+
+    @PutMapping("/{reviewId}")
+    @PreAuthorize("hasRole('USER')")
+    @Operation(
+            summary = "Редактировать отзыв",
+            description = "Клиент может изменить текст, оценку и фото своего отзыва " +
+                    "в течение 24 часов после публикации. После истечения окна редактирование недоступно.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<ReviewResponse> updateReview(
+            @PathVariable UUID reviewId,
+            @Valid @RequestBody UpdateReviewRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        UUID userId = userService.getIdByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(reviewService.updateReview(userId, reviewId, request));
     }
 
     @GetMapping("/my")
