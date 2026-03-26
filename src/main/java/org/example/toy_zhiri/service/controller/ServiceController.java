@@ -4,19 +4,19 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.example.toy_zhiri.service.dto.CategoryResponse;
-import org.example.toy_zhiri.service.dto.ServiceFilterRequest;
-import org.example.toy_zhiri.service.dto.ServicePageResponse;
-import org.example.toy_zhiri.service.dto.ServiceResponse;
+import org.example.toy_zhiri.booking.service.BookingService;
+import org.example.toy_zhiri.service.dto.*;
 import org.example.toy_zhiri.service.enums.SortType;
 import org.example.toy_zhiri.service.service.CategoryService;
 import org.example.toy_zhiri.service.service.ServiceService;
 import org.example.toy_zhiri.user.service.UserService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +28,7 @@ public class ServiceController {
     private final ServiceService serviceService;
     private final CategoryService categoryService;
     private final UserService userService;
+    private final BookingService bookingService;
 
     @GetMapping("/categories")
     @Operation(
@@ -106,7 +107,7 @@ public class ServiceController {
                     "Объединяет даты заблокированные партнёром и занятые активными бронированиями. " +
                     "Используется фронтендом для блокировки дат в календаре."
     )
-    public ResponseEntity<UnavailableDatesResponse> getUnavailableDates(
+    public ResponseEntity<org.example.toy_zhiri.service.dto.UnavailableDatesResponse> getUnavailableDates(
             @PathVariable UUID serviceId,
 
             @Parameter(description = "Начало периода (YYYY-MM-DD)")

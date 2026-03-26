@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.file.dto.FileUploadResponse;
 import org.example.toy_zhiri.file.service.FileUploadService;
@@ -30,7 +31,7 @@ public class FileUploadController {
     )
     public ResponseEntity<FileUploadResponse> uploadSingleImage(
             @RequestParam("file")
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            @RequestBody(
                     content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)
             )
             MultipartFile file) {
@@ -51,7 +52,7 @@ public class FileUploadController {
     )
     public ResponseEntity<FileUploadResponse> uploadMultipleImages(
             @RequestParam("files")
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            @RequestBody(
                     content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)
             )
             List<MultipartFile> files) {

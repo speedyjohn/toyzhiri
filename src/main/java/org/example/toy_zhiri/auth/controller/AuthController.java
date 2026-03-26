@@ -32,33 +32,35 @@ public class AuthController {
      * Регистрирует нового пользователя в системе.
      *
      * @param request данные для регистрации
-     * @return RegisterResponse информация о зарегистрированном пользователе
+     * @return ResponseEntity<RegisterResponse> информация о зарегистрированном пользователе
      */
     @Operation(
         summary = "Регистрация",
         description = "Отправить запрос на регистрацию"
     )
     @PostMapping("/register")
-    public RegisterResponse register(@Valid @RequestBody RegisterRequest request) {
-        return authService.registerUser(request);
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
+        RegisterResponse response = authService.registerUser(request);
+        return ResponseEntity.status(201).body(response);
     }
 
     /**
      * Авторизует пользователя в системе.
      *
      * @param request данные для авторизации
-     * @return AuthResponse JWT токен для доступа
+     * @return ResponseEntity<AuthResponse> JWT токен для доступа
      */
     @Operation(
         summary = "Авторизация",
         description = "Отправить запрос на авторизацию"
     )
     @PostMapping("/login")
-    public AuthResponse login(
+    public ResponseEntity<AuthResponse> login(
         @Valid @RequestBody AuthRequest request,
         HttpServletRequest httpRequest)
     {
-        return authService.login(request, httpRequest);
+        AuthResponse response = authService.login(request, httpRequest);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -66,7 +68,7 @@ public class AuthController {
      *
      * @param userDetails данные аутентифицированного пользователя
      * @param request HTTP запрос для извлечения токена
-     * @return сообщение об успешном выходе
+     * @return ResponseEntity<LogoutResponse> сообщение об успешном выходе
      */
     @Operation(
             summary = "Выход из системы",
@@ -74,10 +76,11 @@ public class AuthController {
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @PostMapping("/logout")
-    public LogoutResponse logout(
+    public ResponseEntity<LogoutResponse> logout(
             @AuthenticationPrincipal UserDetails userDetails,
             HttpServletRequest request)
     {
-        return authService.logout(userDetails, request);
+        LogoutResponse response = authService.logout(userDetails, request);
+        return ResponseEntity.ok(response);
     }
 }

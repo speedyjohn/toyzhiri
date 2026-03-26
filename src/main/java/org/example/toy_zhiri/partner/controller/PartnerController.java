@@ -48,7 +48,7 @@ public class PartnerController {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         PartnerResponse response = partnerService.registerPartner(user.getId(), request);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(201).body(response);
     }
 
     /**
