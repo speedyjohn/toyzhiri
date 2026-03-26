@@ -10,7 +10,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -64,12 +63,13 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             UUID partnerId, LocalDate from, LocalDate to
     );
 
-    // Проверка конфликтов по дате
+    // Проверка конфликтов по дате.
+    // PAID убран — активными считаются только PENDING_CONFIRMATION и CONFIRMED.
 
     @Query("SELECT COUNT(b) > 0 FROM Booking b " +
             "WHERE b.service.id = :serviceId " +
             "AND b.eventDate = :date " +
-            "AND b.status IN ('PENDING_CONFIRMATION', 'CONFIRMED', 'PAID')")
+            "AND b.status IN ('PENDING_CONFIRMATION', 'CONFIRMED')")
     boolean existsActiveBookingForServiceOnDate(
             @Param("serviceId") UUID serviceId,
             @Param("date") LocalDate date
@@ -83,12 +83,12 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
     /**
      * Возвращает занятые даты для услуги за период.
-     * Занятыми считаются даты с активными бронированиями.
+     * Занятыми считаются даты с активными бронированиями (PENDING_CONFIRMATION, CONFIRMED).
      */
     @Query("SELECT b.eventDate FROM Booking b " +
             "WHERE b.service.id = :serviceId " +
             "AND b.eventDate BETWEEN :from AND :to " +
-            "AND b.status IN ('PENDING_CONFIRMATION', 'CONFIRMED', 'PAID')")
+            "AND b.status IN ('PENDING_CONFIRMATION', 'CONFIRMED')")
     List<LocalDate> findBookedDatesByServiceIdAndPeriod(
             @Param("serviceId") UUID serviceId,
             @Param("from") LocalDate from,

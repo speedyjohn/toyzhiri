@@ -121,4 +121,20 @@ public class BookingController {
         UUID userId = userService.getIdByEmail(userDetails.getUsername());
         return ResponseEntity.ok(bookingService.cancelBooking(userId, bookingId));
     }
+
+    @PatchMapping("/{bookingId}/complete")
+    @Operation(
+            summary = "Подтвердить завершение сделки",
+            description = "Клиент подтверждает, что услуга была оказана. " +
+                    "Доступно только для бронирований со статусом CONFIRMED. " +
+                    "Когда оба участника (клиент и партнёр) подтвердят — статус меняется на COMPLETED.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<BookingResponse> confirmCompletion(
+            @PathVariable UUID bookingId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        UUID userId = userService.getIdByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(bookingService.clientConfirmCompletion(userId, bookingId));
+    }
 }

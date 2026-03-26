@@ -46,6 +46,10 @@ public class BookingResponse {
     private String rejectionReason;
     private Map<String, Object> extraParams;
 
+    // Статус двойного подтверждения завершения сделки
+    private Boolean clientConfirmed;
+    private Boolean partnerConfirmed;
+
     /**
      * Ссылка на страницу услуги. Формат: /services/{slug}
      */
@@ -62,6 +66,9 @@ public class BookingResponse {
     private LocalDateTime confirmedAt;
     private LocalDateTime rejectedAt;
     private LocalDateTime cancelledAt;
+    private LocalDateTime clientConfirmedAt;
+    private LocalDateTime partnerConfirmedAt;
+    private LocalDateTime completedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

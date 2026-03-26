@@ -2,7 +2,6 @@ package org.example.toy_zhiri.booking.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.example.toy_zhiri.admin.dto.MessageResponse;
 import org.example.toy_zhiri.booking.dto.BookingHistoryFilter;
 import org.example.toy_zhiri.booking.dto.BookingResponse;
 import org.example.toy_zhiri.booking.dto.CreateBookingRequest;
@@ -24,8 +23,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @RequiredArgsConstructor
@@ -37,8 +40,6 @@ public class BookingService {
     private final ServiceRepository serviceRepository;
     private final PartnerRepository partnerRepository;
     private final ServiceAvailabilityRepository availabilityRepository;
-
-    // КЛИЕНТСКИЕ МЕТОДЫ
 
     /**
      * Создаёт новое бронирование.
@@ -57,12 +58,10 @@ public class BookingService {
             throw new RuntimeException("Услуга недоступна для бронирования");
         }
 
-        // Проверка что дата не занята другим активным бронированием
         if (bookingRepository.existsActiveBookingForServiceOnDate(service.getId(), request.getEventDate())) {
             throw new RuntimeException("Выбранная дата уже занята. Пожалуйста, выберите другую дату.");
         }
 
-        // Проверка что дата не заблокирована партнёром
         boolean isBlockedByPartner = availabilityRepository
                 .findByServiceIdAndDate(service.getId(), request.getEventDate())
                 .map(a -> a.getStatus() == AvailabilityStatus.BLOCKED)
@@ -85,12 +84,13 @@ public class BookingService {
                 .extraParams(request.getExtraParams())
                 .totalPrice(service.getPriceFrom())
                 .status(BookingStatus.PENDING_CONFIRMATION)
+                .clientConfirmed(false)
+                .partnerConfirmed(false)
                 .expiresAt(LocalDateTime.now().plusHours(BOOKING_EXPIRY_HOURS))
                 .build();
 
         Booking saved = bookingRepository.save(booking);
 
-        // Увеличиваем счётчик бронирований у услуги
         service.setBookingsCount(service.getBookingsCount() + 1);
         serviceRepository.save(service);
 
@@ -171,7 +171,39 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
-    // ПАРТНЁРСКИЕ МЕТОДЫ
+    /**
+     * Клиент подтверждает, что услуга оказана.
+     * Доступно только для бронирований со статусом CONFIRMED.
+     * Если партнёр уже подтвердил — статус меняется на COMPLETED.
+     */
+    @Transactional
+    public BookingResponse clientConfirmCompletion(UUID userId, UUID bookingId) {
+        Booking booking = findBookingOrThrow(bookingId);
+
+        if (!booking.getUser().getId().equals(userId)) {
+            throw new RuntimeException("У вас нет доступа к этому бронированию");
+        }
+
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new RuntimeException(
+                    "Подтвердить завершение можно только для бронирования со статусом CONFIRMED. " +
+                            "Текущий статус: " + booking.getStatus()
+            );
+        }
+
+        if (Boolean.TRUE.equals(booking.getClientConfirmed())) {
+            throw new RuntimeException("Вы уже подтвердили завершение сделки");
+        }
+
+        booking.setClientConfirmed(true);
+        booking.setClientConfirmedAt(LocalDateTime.now());
+
+        if (Boolean.TRUE.equals(booking.getPartnerConfirmed())) {
+            completeBooking(booking);
+        }
+
+        return mapToResponse(bookingRepository.save(booking));
+    }
 
     /**
      * Возвращает список бронирований партнёра с опциональной фильтрацией по статусу.
@@ -255,59 +287,80 @@ public class BookingService {
     }
 
     /**
+     * Партнёр подтверждает, что услуга оказана.
+     * Доступно только для бронирований со статусом CONFIRMED.
+     * Если клиент уже подтвердил — статус меняется на COMPLETED.
+     */
+    @Transactional
+    public BookingResponse partnerConfirmCompletion(UUID userId, UUID bookingId) {
+        Partner partner = findPartnerOrThrow(userId);
+        Booking booking = findBookingOrThrow(bookingId);
+
+        if (!booking.getPartner().getId().equals(partner.getId())) {
+            throw new RuntimeException("У вас нет доступа к этому бронированию");
+        }
+
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new RuntimeException(
+                    "Подтвердить завершение можно только для бронирования со статусом CONFIRMED. " +
+                            "Текущий статус: " + booking.getStatus()
+            );
+        }
+
+        if (Boolean.TRUE.equals(booking.getPartnerConfirmed())) {
+            throw new RuntimeException("Вы уже подтвердили завершение сделки");
+        }
+
+        booking.setPartnerConfirmed(true);
+        booking.setPartnerConfirmedAt(LocalDateTime.now());
+
+        if (Boolean.TRUE.equals(booking.getClientConfirmed())) {
+            completeBooking(booking);
+        }
+
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
+    /**
      * Возвращает бронирования партнёра за период (для календаря).
      */
-    public java.util.List<BookingResponse> getPartnerCalendar(
-            UUID userId,
-            java.time.LocalDate from,
-            java.time.LocalDate to) {
-
+    public List<BookingResponse> getPartnerCalendar(UUID userId, LocalDate from, LocalDate to) {
         Partner partner = findPartnerOrThrow(userId);
 
         return bookingRepository
                 .findByPartnerIdAndEventDateBetweenOrderByEventDateAsc(partner.getId(), from, to)
                 .stream()
                 .map(this::mapToResponse)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
     }
 
+    // =========================================================
     // ПУБЛИЧНЫЕ МЕТОДЫ (доступны всем)
+    // =========================================================
 
     /**
      * Возвращает недоступные даты для услуги за указанный период.
-     * Объединяет даты заблокированные партнёром + занятые активными бронированиями.
-     * Используется фронтендом для блокировки дат в календаре при бронировании.
-     *
-     * @param serviceId ID услуги
-     * @param from      начало периода
-     * @param to        конец периода
+     * Объединяет даты, заблокированные партнёром, и даты с активными бронированиями.
      */
-    public UnavailableDatesResponse getUnavailableDates(
-            UUID serviceId,
-            java.time.LocalDate from,
-            java.time.LocalDate to) {
-
+    public UnavailableDatesResponse getUnavailableDates(UUID serviceId, LocalDate from, LocalDate to) {
         serviceRepository.findById(serviceId)
                 .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
 
-        // Даты заблокированные партнёром вручную
-        java.util.List<java.time.LocalDate> blockedByPartner = availabilityRepository
+        List<LocalDate> blockedByPartner = availabilityRepository
                 .findByServiceIdAndDateBetweenOrderByDateAsc(serviceId, from, to)
                 .stream()
                 .filter(a -> a.getStatus() == AvailabilityStatus.BLOCKED)
                 .map(ServiceAvailability::getDate)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
 
-        // Даты занятые активными бронированиями
-        java.util.List<java.time.LocalDate> bookedDates = bookingRepository
+        List<LocalDate> bookedDates = bookingRepository
                 .findBookedDatesByServiceIdAndPeriod(serviceId, from, to);
 
-        // Объединяем без дублей
-        java.util.List<java.time.LocalDate> allUnavailable = java.util.stream.Stream
+        List<LocalDate> allUnavailable = Stream
                 .concat(blockedByPartner.stream(), bookedDates.stream())
                 .distinct()
                 .sorted()
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
 
         return UnavailableDatesResponse.builder()
                 .blockedByPartner(blockedByPartner)
@@ -319,6 +372,15 @@ public class BookingService {
     // =========================================================
     // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
     // =========================================================
+
+    /**
+     * Переводит бронирование в статус COMPLETED.
+     * Вызывается когда оба участника подтвердили завершение сделки.
+     */
+    private void completeBooking(Booking booking) {
+        booking.setStatus(BookingStatus.COMPLETED);
+        booking.setCompletedAt(LocalDateTime.now());
+    }
 
     private Booking findBookingOrThrow(UUID bookingId) {
         return bookingRepository.findById(bookingId)
@@ -352,6 +414,8 @@ public class BookingService {
                 .totalPrice(booking.getTotalPrice())
                 .rejectionReason(booking.getRejectionReason())
                 .extraParams(booking.getExtraParams())
+                .clientConfirmed(booking.getClientConfirmed())
+                .partnerConfirmed(booking.getPartnerConfirmed())
                 .serviceUrl("/services/" + booking.getService().getSlug())
                 // TODO: заменить на реальный chatId после реализации модуля чата
                 .chatUrl(null)
@@ -359,6 +423,9 @@ public class BookingService {
                 .confirmedAt(booking.getConfirmedAt())
                 .rejectedAt(booking.getRejectedAt())
                 .cancelledAt(booking.getCancelledAt())
+                .clientConfirmedAt(booking.getClientConfirmedAt())
+                .partnerConfirmedAt(booking.getPartnerConfirmedAt())
+                .completedAt(booking.getCompletedAt())
                 .createdAt(booking.getCreatedAt())
                 .updatedAt(booking.getUpdatedAt())
                 .build();

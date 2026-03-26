@@ -15,10 +15,10 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
-import java.util.Map;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -70,6 +70,19 @@ public class Booking {
     @Column(name = "extra_params", columnDefinition = "jsonb")
     private Map<String, Object> extraParams;
 
+    // Флаги двойного подтверждения завершения сделки
+    @Column(name = "client_confirmed", nullable = false)
+    private Boolean clientConfirmed = false;
+
+    @Column(name = "partner_confirmed", nullable = false)
+    private Boolean partnerConfirmed = false;
+
+    @Column(name = "client_confirmed_at")
+    private LocalDateTime clientConfirmedAt;
+
+    @Column(name = "partner_confirmed_at")
+    private LocalDateTime partnerConfirmedAt;
+
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
@@ -81,6 +94,9 @@ public class Booking {
 
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
