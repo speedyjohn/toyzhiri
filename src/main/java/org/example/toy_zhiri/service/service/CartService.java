@@ -3,6 +3,7 @@ package org.example.toy_zhiri.service.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.exception.AccessDeniedException;
 import org.example.toy_zhiri.exception.BadRequestException;
 import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.service.dto.AddToCartRequest;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @org.springframework.stereotype.Service
 @RequiredArgsConstructor
 public class CartService {
+
     private final CartItemRepository cartItemRepository;
     private final ServiceRepository serviceRepository;
     private final UserRepository userRepository;
@@ -54,6 +56,29 @@ public class CartService {
 
         return MessageResponse.builder()
                 .message("Услуга добавлена в корзину")
+                .build();
+    }
+
+    /**
+     * Удаляет элемент корзины по ID элемента.
+     *
+     * @param userId ID текущего пользователя
+     * @param cartItemId ID элемента корзины
+     * @return сообщение об успешном удалении
+     */
+    @Transactional
+    public MessageResponse removeCartItem(UUID userId, UUID cartItemId) {
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new NotFoundException("Элемент корзины не найден"));
+
+        if (!cartItem.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("У вас нет доступа к этому элементу корзины");
+        }
+
+        cartItemRepository.delete(cartItem);
+
+        return MessageResponse.builder()
+                .message("Услуга удалена из корзины")
                 .build();
     }
 

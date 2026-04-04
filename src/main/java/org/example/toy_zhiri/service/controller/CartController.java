@@ -22,14 +22,15 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Tag(name = "Cart", description = "API корзины")
 public class CartController {
+
     private final CartService cartService;
     private final UserService userService;
 
     @PostMapping
     @Operation(
-        summary = "Добавить в корзину",
-        description = "Добавить услугу в корзину или обновить существующую",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Добавить в корзину",
+            description = "Добавить услугу в корзину или обновить существующую",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<MessageResponse> addToCart(
             @Valid @RequestBody AddToCartRequest request,
@@ -39,11 +40,25 @@ public class CartController {
         return ResponseEntity.ok(cartService.addToCart(userId, request));
     }
 
+    @DeleteMapping("/item/{cartItemId}")
+    @Operation(
+            summary = "Удалить элемент из корзины по ID элемента",
+            description = "Удалить конкретный элемент корзины по его cartItemId",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<MessageResponse> removeCartItem(
+            @PathVariable UUID cartItemId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        UUID userId = userService.getIdByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(cartService.removeCartItem(userId, cartItemId));
+    }
+
     @DeleteMapping("/{serviceId}")
     @Operation(
-        summary = "Удалить из корзины",
-        description = "Удалить услугу из корзины",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Удалить из корзины по ID услуги",
+            description = "Удалить услугу из корзины по serviceId",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<MessageResponse> removeFromCart(
             @PathVariable UUID serviceId,
@@ -55,9 +70,9 @@ public class CartController {
 
     @DeleteMapping
     @Operation(
-        summary = "Очистить корзину",
-        description = "Удалить все услуги из корзины",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Очистить корзину",
+            description = "Удалить все услуги из корзины",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<MessageResponse> clearCart(
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -68,9 +83,9 @@ public class CartController {
 
     @GetMapping
     @Operation(
-        summary = "Моя корзина",
-        description = "Получить содержимое корзины с итоговой суммой",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Моя корзина",
+            description = "Получить содержимое корзины с итоговой суммой",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<CartResponse> getCart(
             @AuthenticationPrincipal UserDetails userDetails) {
