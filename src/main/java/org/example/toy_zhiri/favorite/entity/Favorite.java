@@ -1,10 +1,11 @@
-package org.example.toy_zhiri.service.entity;
+package org.example.toy_zhiri.favorite.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.toy_zhiri.service.entity.Service;
 import org.example.toy_zhiri.user.entity.User;
 import org.hibernate.annotations.CreationTimestamp;
 

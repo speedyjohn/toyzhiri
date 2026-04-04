@@ -1,4 +1,4 @@
-package org.example.toy_zhiri.service.service;
+package org.example.toy_zhiri.cart.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -6,13 +6,14 @@ import org.example.toy_zhiri.admin.dto.MessageResponse;
 import org.example.toy_zhiri.exception.AccessDeniedException;
 import org.example.toy_zhiri.exception.BadRequestException;
 import org.example.toy_zhiri.exception.NotFoundException;
-import org.example.toy_zhiri.service.dto.AddToCartRequest;
-import org.example.toy_zhiri.service.dto.CartResponse;
+import org.example.toy_zhiri.cart.dto.AddToCartRequest;
+import org.example.toy_zhiri.cart.dto.CartResponse;
 import org.example.toy_zhiri.service.dto.ServiceResponse;
-import org.example.toy_zhiri.service.entity.CartItem;
+import org.example.toy_zhiri.cart.entity.CartItem;
 import org.example.toy_zhiri.service.entity.Service;
-import org.example.toy_zhiri.service.repository.CartItemRepository;
+import org.example.toy_zhiri.cart.repository.CartItemRepository;
 import org.example.toy_zhiri.service.repository.ServiceRepository;
+import org.example.toy_zhiri.service.service.ServiceService;
 import org.example.toy_zhiri.user.entity.User;
 import org.example.toy_zhiri.user.repository.UserRepository;
 

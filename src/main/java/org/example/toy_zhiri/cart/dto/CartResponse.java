@@ -1,9 +1,10 @@
-package org.example.toy_zhiri.service.dto;
+package org.example.toy_zhiri.cart.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.toy_zhiri.service.dto.ServiceResponse;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

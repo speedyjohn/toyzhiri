@@ -1,4 +1,4 @@
-package org.example.toy_zhiri.service.controller;
+package org.example.toy_zhiri.favorite.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
 import org.example.toy_zhiri.service.dto.ServiceResponse;
-import org.example.toy_zhiri.service.service.FavoriteService;
+import org.example.toy_zhiri.favorite.service.FavoriteService;
 import org.example.toy_zhiri.user.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

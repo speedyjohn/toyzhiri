@@ -1,6 +1,6 @@
-package org.example.toy_zhiri.service.repository;
+package org.example.toy_zhiri.favorite.repository;
 
-import org.example.toy_zhiri.service.entity.Favorite;
+import org.example.toy_zhiri.favorite.entity.Favorite;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

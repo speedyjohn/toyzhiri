@@ -1,4 +1,4 @@
-package org.example.toy_zhiri.service.dto;
+package org.example.toy_zhiri.cart.dto;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;

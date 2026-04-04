@@ -1,6 +1,6 @@
-package org.example.toy_zhiri.service.repository;
+package org.example.toy_zhiri.cart.repository;
 
-import org.example.toy_zhiri.service.entity.CartItem;
+import org.example.toy_zhiri.cart.entity.CartItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

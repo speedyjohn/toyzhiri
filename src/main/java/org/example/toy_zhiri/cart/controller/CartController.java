@@ -1,4 +1,4 @@
-package org.example.toy_zhiri.service.controller;
+package org.example.toy_zhiri.cart.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -6,9 +6,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
-import org.example.toy_zhiri.service.dto.AddToCartRequest;
-import org.example.toy_zhiri.service.dto.CartResponse;
-import org.example.toy_zhiri.service.service.CartService;
+import org.example.toy_zhiri.cart.dto.AddToCartRequest;
+import org.example.toy_zhiri.cart.dto.CartResponse;
+import org.example.toy_zhiri.cart.service.CartService;
 import org.example.toy_zhiri.user.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
