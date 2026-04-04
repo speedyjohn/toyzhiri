@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
 import org.example.toy_zhiri.notification.dto.NotificationResponse;
+import org.example.toy_zhiri.notification.dto.TestNotificationRequest;
 import org.example.toy_zhiri.notification.dto.UnreadCountResponse;
 import org.example.toy_zhiri.notification.entity.Notification;
 import org.example.toy_zhiri.notification.entity.NotificationSettings;
@@ -19,6 +20,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -40,10 +43,7 @@ public class NotificationService {
     private final NotificationSettingsRepository settingsRepository;
     private final UserRepository userRepository;
     private final SmsNotificationService smsNotificationService;
-
-    // =========================================================
-    // СОЗДАНИЕ УВЕДОМЛЕНИЙ (вызывается из других сервисов)
-    // =========================================================
+    private final EmailNotificationService emailNotificationService;
 
     /**
      * Создаёт уведомление для пользователя.
@@ -89,6 +89,9 @@ public class NotificationService {
 
         // SMS-канал
         dispatchSms(user, title, message);
+
+        // Email-канал
+        dispatchEmail(user, title, message);
     }
 
     /**
@@ -100,6 +103,51 @@ public class NotificationService {
                      String title,
                      String message) {
         send(userId, type, title, message, null, null);
+    }
+
+    /**
+     * Тестовая отправка уведомления через выбранные каналы.
+     * Игнорирует настройки пользователя — отправляет принудительно.
+     * Доступно только администратору.
+     */
+    @Transactional
+    public String sendTest(UUID userId, TestNotificationRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        List<String> channels = new ArrayList<>();
+
+        if (Boolean.TRUE.equals(request.getPush())) {
+            Notification notification = Notification.builder()
+                    .user(user)
+                    .type(NotificationType.SYSTEM)
+                    .title(request.getTitle())
+                    .message(request.getMessage())
+                    .isRead(false)
+                    .build();
+            notificationRepository.save(notification);
+            channels.add("push");
+        }
+
+        if (Boolean.TRUE.equals(request.getEmail())) {
+            String targetEmail = request.getRecipientEmail() != null && !request.getRecipientEmail().isBlank()
+                    ? request.getRecipientEmail()
+                    : user.getEmail();
+            emailNotificationService.send(targetEmail, request.getTitle(), request.getMessage());
+            channels.add("email → " + targetEmail);
+        }
+
+        if (Boolean.TRUE.equals(request.getSms())) {
+            smsNotificationService.send(user.getPhone(), request.getTitle(), request.getMessage());
+            channels.add("sms");
+        }
+
+        if (channels.isEmpty()) {
+            return "Не выбран ни один канал";
+        }
+
+        log.info("Тестовое уведомление отправлено через: {}", channels);
+        return "Тестовое уведомление отправлено через: " + String.join(", ", channels);
     }
 
     // =========================================================
@@ -131,10 +179,6 @@ public class NotificationService {
         long count = notificationRepository.countByUserIdAndIsReadFalse(userId);
         return UnreadCountResponse.builder().count(count).build();
     }
-
-    // =========================================================
-    // ПОМЕТКА КАК ПРОЧИТАННЫХ
-    // =========================================================
 
     /**
      * Помечает одно уведомление как прочитанное.
@@ -168,10 +212,6 @@ public class NotificationService {
                 .build();
     }
 
-    // =========================================================
-    // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
-    // =========================================================
-
     /**
      * Отправляет SMS, если канал включён в настройках пользователя.
      */
@@ -182,6 +222,19 @@ public class NotificationService {
 
         if (smsEnabled && user.getPhone() != null && !user.getPhone().isBlank()) {
             smsNotificationService.send(user.getPhone(), title, message);
+        }
+    }
+
+    /**
+     * Отправляет email, если канал включён в настройках пользователя.
+     */
+    private void dispatchEmail(User user, String title, String message) {
+        boolean emailEnabled = settingsRepository.findByUserId(user.getId())
+                .map(NotificationSettings::getEmailEnabled)
+                .orElse(true);
+
+        if (emailEnabled && user.getEmail() != null && !user.getEmail().isBlank()) {
+            emailNotificationService.send(user.getEmail(), title, message);
         }
     }
 
