@@ -6,13 +6,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.toy_zhiri.admin.dto.MessageResponse;
 import org.example.toy_zhiri.auth.dto.*;
 import org.example.toy_zhiri.auth.service.AuthService;
-import org.example.toy_zhiri.auth.service.LoginHistoryService;
-import org.example.toy_zhiri.auth.service.TokenBlacklistService;
-import org.example.toy_zhiri.user.entity.User;
-import org.example.toy_zhiri.user.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "Auth", description = "API для аутентификации")
 public class AuthController {
+
     private final AuthService authService;
 
     /**
@@ -35,8 +31,8 @@ public class AuthController {
      * @return ResponseEntity<RegisterResponse> информация о зарегистрированном пользователе
      */
     @Operation(
-        summary = "Регистрация",
-        description = "Отправить запрос на регистрацию"
+            summary = "Регистрация",
+            description = "Отправить запрос на регистрацию"
     )
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -48,18 +44,36 @@ public class AuthController {
      * Авторизует пользователя в системе.
      *
      * @param request данные для авторизации
-     * @return ResponseEntity<AuthResponse> JWT токен для доступа
+     * @return ResponseEntity<AuthResponse> access и refresh токены
      */
     @Operation(
-        summary = "Авторизация",
-        description = "Отправить запрос на авторизацию"
+            summary = "Авторизация",
+            description = "Отправить запрос на авторизацию. Возвращает access и refresh токены"
     )
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
-        @Valid @RequestBody AuthRequest request,
-        HttpServletRequest httpRequest)
+            @Valid @RequestBody AuthRequest request,
+            HttpServletRequest httpRequest)
     {
         AuthResponse response = authService.login(request, httpRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Обновляет access токен по refresh токену.
+     *
+     * @param request запрос с refresh токеном
+     * @return ResponseEntity<AuthResponse> новая пара access + refresh токенов
+     */
+    @Operation(
+            summary = "Обновление токена",
+            description = "Обновляет access токен по refresh токену. Не требует авторизации"
+    )
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request)
+    {
+        AuthResponse response = authService.refreshToken(request);
         return ResponseEntity.ok(response);
     }
 
@@ -72,7 +86,7 @@ public class AuthController {
      */
     @Operation(
             summary = "Выход из системы",
-            description = "Отзывает текущий JWT токен и логирует выход",
+            description = "Отзывает текущий JWT токен и удаляет refresh токен",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @PostMapping("/logout")

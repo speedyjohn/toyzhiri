@@ -3,16 +3,14 @@ package org.example.toy_zhiri.auth.service;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.example.toy_zhiri.admin.dto.MessageResponse;
 import org.example.toy_zhiri.auth.dto.*;
+import org.example.toy_zhiri.auth.entity.RefreshToken;
 import org.example.toy_zhiri.auth.security.JwtTokenProvider;
-import org.example.toy_zhiri.auth.service.LoginHistoryService;
 import org.example.toy_zhiri.user.entity.User;
 import org.example.toy_zhiri.user.enums.UserRole;
 import org.example.toy_zhiri.user.repository.UserRepository;
 import org.example.toy_zhiri.user.service.UserService;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -28,12 +26,14 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final LoginHistoryService loginHistoryService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final RefreshTokenService refreshTokenService;
     private final UserService userService;
 
     /**
@@ -88,9 +88,11 @@ public class AuthService {
 
     /**
      * Выполняет авторизацию пользователя.
+     * Возвращает access токен и refresh токен.
      *
      * @param request данные для авторизации
-     * @return AuthResponse JWT токен для доступа
+     * @param httpRequest HTTP запрос для логирования
+     * @return AuthResponse access и refresh токены
      * @throws RuntimeException если email или пароль неверны
      */
     public AuthResponse login(AuthRequest request, HttpServletRequest httpRequest) {
@@ -127,18 +129,20 @@ public class AuthService {
 
             loginHistoryService.logLogin(user, true, null, httpRequest);
 
-            String token = jwtTokenProvider.generateToken(
+            String accessToken = jwtTokenProvider.generateToken(
                     user.getId(),
                     user.getEmail(),
                     user.getRole().name()
             );
 
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
             return AuthResponse.builder()
-                    .token(token)
+                    .token(accessToken)
+                    .refreshToken(refreshToken.getToken())
                     .build();
 
         } catch (AuthenticationException e) {
-            // Неверный пароль
             if (user != null) {
                 loginHistoryService.logLogin(user, false, "Неверный пароль", httpRequest);
             }
@@ -146,17 +150,59 @@ public class AuthService {
         }
     }
 
+    /**
+     * Обновляет access токен по refresh токену.
+     * Реализует ротацию: старый refresh токен заменяется новым.
+     *
+     * @param request запрос с refresh токеном
+     * @return AuthResponse новая пара access + refresh токенов
+     * @throws RuntimeException если refresh токен невалиден или истёк
+     */
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+        RefreshToken refreshToken = refreshTokenService.findByToken(request.getRefreshToken())
+                .orElseThrow(() -> new RuntimeException("Refresh токен не найден"));
+
+        // Проверяем срок действия
+        refreshTokenService.verifyExpiration(refreshToken);
+
+        User user = refreshToken.getUser();
+
+        // Генерируем новый access токен
+        String newAccessToken = jwtTokenProvider.generateToken(
+                user.getId(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+
+        // Ротация: создаём новый refresh токен (старый удаляется внутри createRefreshToken)
+        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
+
+        return AuthResponse.builder()
+                .token(newAccessToken)
+                .refreshToken(newRefreshToken.getToken())
+                .build();
+    }
+
+    /**
+     * Выход из системы (отзыв токена).
+     *
+     * @param userDetails данные аутентифицированного пользователя
+     * @param httpRequest HTTP запрос для извлечения токена
+     * @return LogoutResponse сообщение об успешном выходе
+     */
     public LogoutResponse logout(UserDetails userDetails, HttpServletRequest httpRequest) {
-        // Извлекаем токен из заголовка
         String header = httpRequest.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
-            // Добавляем токен в blacklist
+            // Добавляем access токен в blacklist
             tokenBlacklistService.blacklistToken(token);
 
-            // Логируем выход
+            // Удаляем refresh токены пользователя
             User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
+            refreshTokenService.deleteByUserId(user.getId());
+
+            // Логируем выход
             loginHistoryService.logLogout(user, httpRequest);
 
             return LogoutResponse.builder()
