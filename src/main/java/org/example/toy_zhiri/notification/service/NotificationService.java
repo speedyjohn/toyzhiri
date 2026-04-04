@@ -4,6 +4,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.exception.AccessDeniedException;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.notification.dto.NotificationResponse;
 import org.example.toy_zhiri.notification.dto.TestNotificationRequest;
 import org.example.toy_zhiri.notification.dto.UnreadCountResponse;
@@ -71,7 +73,7 @@ public class NotificationService {
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 
         Notification notification = Notification.builder()
                 .user(user)
@@ -113,7 +115,7 @@ public class NotificationService {
     @Transactional
     public String sendTest(UUID userId, TestNotificationRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 
         List<String> channels = new ArrayList<>();
 
@@ -186,10 +188,10 @@ public class NotificationService {
     @Transactional
     public NotificationResponse markAsRead(UUID userId, UUID notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Уведомление не найдено"));
+                .orElseThrow(() -> new NotFoundException("Уведомление не найдено"));
 
         if (!notification.getUser().getId().equals(userId)) {
-            throw new RuntimeException("У вас нет доступа к этому уведомлению");
+            throw new AccessDeniedException("У вас нет доступа к этому уведомлению");
         }
 
         if (!notification.getIsRead()) {

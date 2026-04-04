@@ -3,6 +3,8 @@ package org.example.toy_zhiri.service.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.exception.ConflictException;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.service.dto.ServiceResponse;
 import org.example.toy_zhiri.service.entity.Favorite;
 import org.example.toy_zhiri.service.entity.Service;
@@ -26,14 +28,14 @@ public class FavoriteService {
     @Transactional
     public MessageResponse addToFavorites(UUID userId, UUID serviceId) {
         if (favoriteRepository.existsByUserIdAndServiceId(userId, serviceId)) {
-            throw new RuntimeException("Услуга уже в избранном");
+            throw new ConflictException("Услуга уже в избранном");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 
         Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         Favorite favorite = Favorite.builder()
                 .user(user)
@@ -50,7 +52,7 @@ public class FavoriteService {
     @Transactional
     public MessageResponse removeFromFavorites(UUID userId, UUID serviceId) {
         if (!favoriteRepository.existsByUserIdAndServiceId(userId, serviceId)) {
-            throw new RuntimeException("Услуга не найдена в избранном");
+            throw new NotFoundException("Услуга не найдена в избранном");
         }
 
         favoriteRepository.deleteByUserIdAndServiceId(userId, serviceId);

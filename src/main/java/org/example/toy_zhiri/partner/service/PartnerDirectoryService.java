@@ -3,6 +3,7 @@ package org.example.toy_zhiri.partner.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.partner.dto.PartnerProfileResponse;
 import org.example.toy_zhiri.partner.dto.PartnerProfileUpdateRequest;
 import org.example.toy_zhiri.partner.entity.Partner;
@@ -37,7 +38,7 @@ public class PartnerDirectoryService {
      */
     public PartnerProfileResponse getPartnerProfile(UUID partnerId) {
         Partner partner = partnerRepository.findById(partnerId)
-                .orElseThrow(() -> new RuntimeException("Партнер не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнер не найден"));
 
         return mapToProfileResponse(partner);
     }
@@ -50,7 +51,7 @@ public class PartnerDirectoryService {
      */
     public PartnerProfileResponse getPartnerProfileByUserId(UUID userId) {
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнер не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнер не найден"));
 
         return mapToProfileResponse(partner);
     }
@@ -104,7 +105,7 @@ public class PartnerDirectoryService {
     @Transactional
     public PartnerProfileResponse updatePartnerProfile(UUID userId, PartnerProfileUpdateRequest request) {
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнер не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнер не найден"));
 
         // Обновляем только переданные поля
         if (request.getCompanyName() != null) {

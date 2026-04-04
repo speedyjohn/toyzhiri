@@ -3,6 +3,8 @@ package org.example.toy_zhiri.service.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.exception.AccessDeniedException;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.partner.entity.Partner;
 import org.example.toy_zhiri.partner.repository.PartnerRepository;
 import org.example.toy_zhiri.service.dto.CreateServiceRequest;
@@ -32,10 +34,10 @@ public class PartnerServiceService {
     @Transactional
     public ServiceResponse createService(UUID userId, CreateServiceRequest request) {
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнёр не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
 
         ServiceCategory category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Категория не найдена"));
+                .orElseThrow(() -> new NotFoundException("Категория не найдена"));
 
         String slug = generateSlug(request.getName());
 
@@ -82,13 +84,13 @@ public class PartnerServiceService {
     @Transactional
     public ServiceResponse updateService(UUID userId, UUID serviceId, UpdateServiceRequest request) {
         Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнёр не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
 
         if (!service.getPartner().getId().equals(partner.getId())) {
-            throw new RuntimeException("У вас нет прав на редактирование этой услуги");
+            throw new AccessDeniedException("У вас нет прав на редактирование этой услуги");
         }
 
         if (request.getName() != null) {
@@ -126,13 +128,13 @@ public class PartnerServiceService {
     @Transactional
     public MessageResponse deleteService(UUID userId, UUID serviceId) {
         Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнёр не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
 
         if (!service.getPartner().getId().equals(partner.getId())) {
-            throw new RuntimeException("У вас нет прав на удаление этой услуги");
+            throw new AccessDeniedException("У вас нет прав на удаление этой услуги");
         }
 
         serviceRepository.delete(service);
@@ -144,7 +146,7 @@ public class PartnerServiceService {
 
     public Page<ServiceResponse> getMyServices(UUID userId, Pageable pageable) {
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнёр не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
 
         Page<Service> services = serviceRepository.findByPartnerIdAndIsActiveTrue(partner.getId(), pageable);
         return services.map(service -> serviceService.getServiceById(service.getId(), userId));

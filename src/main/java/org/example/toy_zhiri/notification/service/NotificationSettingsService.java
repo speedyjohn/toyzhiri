@@ -2,6 +2,7 @@ package org.example.toy_zhiri.notification.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.notification.dto.NotificationSettingsResponse;
 import org.example.toy_zhiri.notification.dto.UpdateNotificationSettingsRequest;
 import org.example.toy_zhiri.notification.entity.NotificationSettings;
@@ -73,7 +74,7 @@ public class NotificationSettingsService {
         return settingsRepository.findByUserId(userId)
                 .orElseGet(() -> {
                     User user = userRepository.findById(userId)
-                            .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                            .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 
                     return settingsRepository.save(
                             NotificationSettings.builder()

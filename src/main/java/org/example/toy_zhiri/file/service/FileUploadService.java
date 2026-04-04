@@ -1,6 +1,8 @@
 package org.example.toy_zhiri.file.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.example.toy_zhiri.exception.BadRequestException;
+import org.example.toy_zhiri.exception.FileUploadException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,7 +53,7 @@ public class FileUploadService {
 
         } catch (IOException e) {
             log.error("Error uploading file", e);
-            throw new RuntimeException("Не удалось загрузить файл: " + e.getMessage());
+            throw new FileUploadException("Не удалось загрузить файл: " + e.getMessage());
         }
     }
 
@@ -76,32 +78,32 @@ public class FileUploadService {
 
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new RuntimeException("Файл пустой");
+            throw new BadRequestException("Файл пустой");
         }
 
         if (file.getSize() > maxFileSize) {
-            throw new RuntimeException("Размер файла превышает " + (maxFileSize / 1024 / 1024) + "MB");
+            throw new BadRequestException("Размер файла превышает " + (maxFileSize / 1024 / 1024) + "MB");
         }
 
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_MIME_TYPES.contains(contentType)) {
-            throw new RuntimeException("Недопустимый тип файла. Разрешены только изображения");
+            throw new BadRequestException("Недопустимый тип файла. Разрешены только изображения");
         }
 
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null) {
-            throw new RuntimeException("Имя файла отсутствует");
+            throw new BadRequestException("Имя файла отсутствует");
         }
 
         String extension = getFileExtension(originalFilename);
         if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
-            throw new RuntimeException("Недопустимое расширение файла. Разрешены: " + ALLOWED_EXTENSIONS);
+            throw new BadRequestException("Недопустимое расширение файла. Разрешены: " + ALLOWED_EXTENSIONS);
         }
     }
 
     private String getFileExtension(String filename) {
         if (filename == null || !filename.contains(".")) {
-            throw new RuntimeException("Файл не имеет расширения");
+            throw new BadRequestException("Файл не имеет расширения");
         }
         return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
     }

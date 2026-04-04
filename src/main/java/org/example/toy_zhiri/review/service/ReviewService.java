@@ -5,6 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.booking.entity.Booking;
 import org.example.toy_zhiri.booking.enums.BookingStatus;
 import org.example.toy_zhiri.booking.repository.BookingRepository;
+import org.example.toy_zhiri.exception.AccessDeniedException;
+import org.example.toy_zhiri.exception.ConflictException;
+import org.example.toy_zhiri.exception.InvalidStateException;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.notification.enums.NotificationType;
 import org.example.toy_zhiri.notification.enums.RelatedEntityType;
 import org.example.toy_zhiri.notification.service.NotificationService;
@@ -50,21 +54,21 @@ public class ReviewService {
     @Transactional
     public ReviewResponse createReview(UUID userId, CreateReviewRequest request) {
         Booking booking = bookingRepository.findById(request.getBookingId())
-                .orElseThrow(() -> new RuntimeException("Бронирование не найдено"));
+                .orElseThrow(() -> new NotFoundException("Бронирование не найдено"));
 
         if (!booking.getUser().getId().equals(userId)) {
-            throw new RuntimeException("У вас нет доступа к этому бронированию");
+            throw new AccessDeniedException("У вас нет доступа к этому бронированию");
         }
 
         if (booking.getStatus() != BookingStatus.COMPLETED) {
-            throw new RuntimeException(
+            throw new InvalidStateException(
                     "Оставить отзыв можно только после завершения сделки (статус COMPLETED). " +
                             "Текущий статус: " + booking.getStatus()
             );
         }
 
         if (reviewRepository.existsByBookingId(booking.getId())) {
-            throw new RuntimeException("Вы уже оставили отзыв по этому бронированию");
+            throw new ConflictException("Вы уже оставили отзыв по этому бронированию");
         }
 
         Review review = Review.builder()
@@ -104,14 +108,14 @@ public class ReviewService {
     @Transactional
     public ReviewResponse updateReview(UUID userId, UUID reviewId, UpdateReviewRequest request) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+                .orElseThrow(() -> new NotFoundException("Отзыв не найден"));
 
         if (!review.getUser().getId().equals(userId)) {
-            throw new RuntimeException("У вас нет доступа к этому отзыву");
+            throw new AccessDeniedException("У вас нет доступа к этому отзыву");
         }
 
         if (review.getCreatedAt().plusHours(EDIT_WINDOW_HOURS).isBefore(LocalDateTime.now())) {
-            throw new RuntimeException(
+            throw new InvalidStateException(
                     "Редактирование отзыва доступно только в течение " + EDIT_WINDOW_HOURS +
                             " часов после публикации"
             );
@@ -134,7 +138,7 @@ public class ReviewService {
      */
     public Page<ReviewResponse> getServiceReviews(UUID serviceId, ReviewSortType sortType, Pageable pageable) {
         serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         Pageable sortedPageable = PageRequest.of(
                 pageable.getPageNumber(),
@@ -168,7 +172,7 @@ public class ReviewService {
      */
     public ReviewSummaryResponse getServiceReviewSummary(UUID serviceId) {
         serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         double avg = reviewRepository.findAverageRatingByServiceId(serviceId).orElse(0.0);
         long count = reviewRepository.countByServiceIdAndIsVisibleTrue(serviceId);
@@ -188,10 +192,6 @@ public class ReviewService {
                 .map(this::mapToResponse);
     }
 
-    // =========================================================
-    // ADMIN МЕТОДЫ
-    // =========================================================
-
     /**
      * Администратор скрывает отзыв (is_visible = false).
      * Отзыв остаётся в БД, но не отображается публично.
@@ -199,7 +199,7 @@ public class ReviewService {
     @Transactional
     public void hideReview(UUID reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+                .orElseThrow(() -> new NotFoundException("Отзыв не найден"));
 
         review.setIsVisible(false);
         reviewRepository.save(review);
@@ -213,7 +213,7 @@ public class ReviewService {
     @Transactional
     public void showReview(UUID reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+                .orElseThrow(() -> new NotFoundException("Отзыв не найден"));
 
         review.setIsVisible(true);
         reviewRepository.save(review);
@@ -227,7 +227,7 @@ public class ReviewService {
     @Transactional
     public void deleteReview(UUID reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+                .orElseThrow(() -> new NotFoundException("Отзыв не найден"));
 
         UUID serviceId = review.getService().getId();
 
@@ -235,10 +235,6 @@ public class ReviewService {
 
         recalculateServiceRating(serviceId);
     }
-
-    // =========================================================
-    // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
-    // =========================================================
 
     /**
      * Строит Sort на основе типа сортировки отзывов.

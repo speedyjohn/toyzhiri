@@ -3,6 +3,9 @@ package org.example.toy_zhiri.payment.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.toy_zhiri.exception.AccessDeniedException;
+import org.example.toy_zhiri.exception.InvalidStateException;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.notification.enums.NotificationType;
 import org.example.toy_zhiri.notification.enums.RelatedEntityType;
 import org.example.toy_zhiri.notification.service.NotificationService;
@@ -42,17 +45,17 @@ public class PaymentService {
     @Transactional
     public PaymentResponse processPayment(UUID userId, PaymentRequest request) {
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнёр не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
 
         Subscription subscription = subscriptionRepository.findById(request.getSubscriptionId())
-                .orElseThrow(() -> new RuntimeException("Подписка не найдена"));
+                .orElseThrow(() -> new NotFoundException("Подписка не найдена"));
 
         if (!subscription.getPartner().getId().equals(partner.getId())) {
-            throw new RuntimeException("Подписка не принадлежит вам");
+            throw new AccessDeniedException("Подписка не принадлежит вам");
         }
 
         if (subscription.getStatus() != SubscriptionStatus.PENDING) {
-            throw new RuntimeException("Подписка не ожидает оплаты");
+            throw new InvalidStateException("Подписка не ожидает оплаты");
         }
 
         PaymentResponse response = switch (request.getPaymentMethod()) {

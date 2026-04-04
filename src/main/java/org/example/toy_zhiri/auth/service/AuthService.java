@@ -6,11 +6,13 @@ import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.auth.dto.*;
 import org.example.toy_zhiri.auth.entity.RefreshToken;
 import org.example.toy_zhiri.auth.security.JwtTokenProvider;
+import org.example.toy_zhiri.exception.AuthException;
+import org.example.toy_zhiri.exception.BadRequestException;
+import org.example.toy_zhiri.exception.ConflictException;
 import org.example.toy_zhiri.user.entity.User;
 import org.example.toy_zhiri.user.enums.UserRole;
 import org.example.toy_zhiri.user.repository.UserRepository;
 import org.example.toy_zhiri.user.service.UserService;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -52,11 +54,11 @@ public class AuthService {
      *
      * @param request данные для регистрации
      * @return RegisterResponse информация о зарегистрированном пользователе
-     * @throws DuplicateKeyException если пользователь с таким email уже существует
+     * @throws ConflictException если пользователь с таким email уже существует
      */
     private RegisterResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateKeyException("Пользователь с таким email уже существует");
+            throw new ConflictException("Пользователь с таким email уже существует");
         }
 
         User user = User.builder()
@@ -93,7 +95,7 @@ public class AuthService {
      * @param request данные для авторизации
      * @param httpRequest HTTP запрос для логирования
      * @return AuthResponse access и refresh токены
-     * @throws RuntimeException если email или пароль неверны
+     * @throws AuthException если email или пароль неверны, или аккаунт заблокирован
      */
     public AuthResponse login(AuthRequest request, HttpServletRequest httpRequest) {
         User user = null;
@@ -109,12 +111,12 @@ public class AuthService {
                         .lastName("User")
                         .build();
                 loginHistoryService.logLogin(tempUser, false, "Пользователь не найден", httpRequest);
-                throw new RuntimeException("Неверный email или пароль");
+                throw new AuthException("Неверный email или пароль");
             }
 
             if (!user.getIsActive()) {
                 loginHistoryService.logLogin(user, false, "Аккаунт заблокирован", httpRequest);
-                throw new RuntimeException("Аккаунт заблокирован. Обратитесь к администратору.");
+                throw new AuthException("Аккаунт заблокирован. Обратитесь к администратору.");
             }
 
             authenticationManager.authenticate(
@@ -146,7 +148,7 @@ public class AuthService {
             if (user != null) {
                 loginHistoryService.logLogin(user, false, "Неверный пароль", httpRequest);
             }
-            throw new RuntimeException("Неверный email или пароль");
+            throw new AuthException("Неверный email или пароль");
         }
     }
 
@@ -156,25 +158,22 @@ public class AuthService {
      *
      * @param request запрос с refresh токеном
      * @return AuthResponse новая пара access + refresh токенов
-     * @throws RuntimeException если refresh токен невалиден или истёк
+     * @throws AuthException если refresh токен невалиден или истёк
      */
     public AuthResponse refreshToken(RefreshTokenRequest request) {
         RefreshToken refreshToken = refreshTokenService.findByToken(request.getRefreshToken())
-                .orElseThrow(() -> new RuntimeException("Refresh токен не найден"));
+                .orElseThrow(() -> new AuthException("Refresh токен не найден"));
 
-        // Проверяем срок действия
         refreshTokenService.verifyExpiration(refreshToken);
 
         User user = refreshToken.getUser();
 
-        // Генерируем новый access токен
         String newAccessToken = jwtTokenProvider.generateToken(
                 user.getId(),
                 user.getEmail(),
                 user.getRole().name()
         );
 
-        // Ротация: создаём новый refresh токен (старый удаляется внутри createRefreshToken)
         RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
 
         return AuthResponse.builder()
@@ -195,14 +194,11 @@ public class AuthService {
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
-            // Добавляем access токен в blacklist
             tokenBlacklistService.blacklistToken(token);
 
-            // Удаляем refresh токены пользователя
             User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
             refreshTokenService.deleteByUserId(user.getId());
 
-            // Логируем выход
             loginHistoryService.logLogout(user, httpRequest);
 
             return LogoutResponse.builder()
@@ -210,8 +206,6 @@ public class AuthService {
                     .build();
         }
 
-        return LogoutResponse.builder()
-                .token("Invalid token")
-                .build();
+        throw new BadRequestException("Токен не предоставлен");
     }
 }

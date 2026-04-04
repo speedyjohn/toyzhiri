@@ -3,6 +3,9 @@ package org.example.toy_zhiri.admin.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.*;
+import org.example.toy_zhiri.exception.BadRequestException;
+import org.example.toy_zhiri.exception.ConflictException;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.notification.enums.NotificationType;
 import org.example.toy_zhiri.notification.service.NotificationService;
 import org.example.toy_zhiri.user.entity.User;
@@ -40,7 +43,7 @@ public class AdminUserService {
                 spec = spec.and((root, query, cb) ->
                         cb.equal(root.get("role"), userRole));
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Некорректная роль: " + role);
+                throw new BadRequestException("Некорректная роль: " + role);
             }
         }
 
@@ -67,7 +70,7 @@ public class AdminUserService {
      */
     public AdminUserDetailResponse getUserById(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
 
         return mapToAdminUserDetailResponse(user);
     }
@@ -77,7 +80,7 @@ public class AdminUserService {
      */
     public AdminUserDetailResponse getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Пользователь с email " + email + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с email " + email + " не найден"));
 
         return mapToAdminUserDetailResponse(user);
     }
@@ -88,7 +91,7 @@ public class AdminUserService {
     @Transactional
     public AdminUserResponse createUser(AdminCreateUserRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Пользователь с email " + request.getEmail() + " уже существует");
+            throw new ConflictException("Пользователь с email " + request.getEmail() + " уже существует");
         }
 
         User user = User.builder()
@@ -112,11 +115,11 @@ public class AdminUserService {
     @Transactional
     public AdminUserResponse updateUser(UUID userId, AdminUpdateUserRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
 
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(request.getEmail())) {
-                throw new RuntimeException("Email " + request.getEmail() + " уже занят");
+                throw new ConflictException("Email " + request.getEmail() + " уже занят");
             }
             user.setEmail(request.getEmail());
             user.setEmailVerified(false);
@@ -148,13 +151,13 @@ public class AdminUserService {
     @Transactional
     public AdminUserResponse changeUserRole(UUID userId, AdminChangeRoleRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
 
         try {
             UserRole newRole = UserRole.valueOf(request.getRole().toUpperCase());
             user.setRole(newRole);
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Некорректная роль: " + request.getRole());
+            throw new BadRequestException("Некорректная роль: " + request.getRole());
         }
 
         User updatedUser = userRepository.save(user);
@@ -168,7 +171,7 @@ public class AdminUserService {
     public AdminUserResponse changeEmailVerification(UUID userId,
                                                      AdminChangeEmailVerificationRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
 
         user.setEmailVerified(request.getEmailVerified());
         User updatedUser = userRepository.save(user);
@@ -181,7 +184,7 @@ public class AdminUserService {
     @Transactional
     public MessageResponse resetUserPassword(UUID userId, AdminResetPasswordRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
@@ -207,7 +210,7 @@ public class AdminUserService {
     public AdminUserResponse changeActiveStatus(UUID userId,
                                                 AdminChangeActiveStatusRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
 
         user.setIsActive(request.getIsActive());
 
@@ -233,7 +236,7 @@ public class AdminUserService {
     @Transactional
     public MessageResponse deleteUser(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
 
         String userEmail = user.getEmail();
         userRepository.delete(user);

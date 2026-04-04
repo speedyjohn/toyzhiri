@@ -2,6 +2,9 @@ package org.example.toy_zhiri.service.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.toy_zhiri.exception.AccessDeniedException;
+import org.example.toy_zhiri.exception.BadRequestException;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.service.dto.AvailabilityResponse;
 import org.example.toy_zhiri.service.dto.SetAvailabilityRequest;
 import org.example.toy_zhiri.service.entity.Service;
@@ -35,7 +38,7 @@ public class ServiceAvailabilityService {
      */
     public List<AvailabilityResponse> getAvailability(UUID serviceId, LocalDate from, LocalDate to) {
         serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         return availabilityRepository
                 .findByServiceIdAndDateBetweenOrderByDateAsc(serviceId, from, to)
@@ -61,20 +64,20 @@ public class ServiceAvailabilityService {
             SetAvailabilityRequest request) {
 
         Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнёр не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
 
         if (!service.getPartner().getId().equals(partner.getId())) {
-            throw new RuntimeException("У вас нет прав на управление этой услугой");
+            throw new AccessDeniedException("У вас нет прав на управление этой услугой");
         }
 
         AvailabilityStatus status;
         try {
             status = AvailabilityStatus.valueOf(request.getStatus().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Некорректный статус: " + request.getStatus() +
+            throw new BadRequestException("Некорректный статус: " + request.getStatus() +
                     ". Допустимые значения: AVAILABLE, BLOCKED");
         }
 
@@ -98,18 +101,18 @@ public class ServiceAvailabilityService {
     @Transactional
     public void deleteAvailability(UUID userId, UUID serviceId, LocalDate date) {
         Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнёр не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
 
         if (!service.getPartner().getId().equals(partner.getId())) {
-            throw new RuntimeException("У вас нет прав на управление этой услугой");
+            throw new AccessDeniedException("У вас нет прав на управление этой услугой");
         }
 
         ServiceAvailability availability = availabilityRepository
                 .findByServiceIdAndDate(serviceId, date)
-                .orElseThrow(() -> new RuntimeException("Запись на дату " + date + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Запись на дату " + date + " не найдена"));
 
         availabilityRepository.delete(availability);
     }

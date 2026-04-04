@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.toy_zhiri.auth.entity.RefreshToken;
 import org.example.toy_zhiri.auth.repository.RefreshTokenRepository;
+import org.example.toy_zhiri.exception.AuthException;
 import org.example.toy_zhiri.user.entity.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -64,13 +65,13 @@ public class RefreshTokenService {
      *
      * @param refreshToken refresh токен для проверки
      * @return проверенный refresh токен
-     * @throws RuntimeException если токен истёк
+     * @throws AuthException если токен истёк
      */
     @Transactional
     public RefreshToken verifyExpiration(RefreshToken refreshToken) {
         if (refreshToken.isExpired()) {
             refreshTokenRepository.delete(refreshToken);
-            throw new RuntimeException(
+            throw new AuthException(
                     "Refresh токен истёк. Пожалуйста, выполните повторный вход.");
         }
         return refreshToken;

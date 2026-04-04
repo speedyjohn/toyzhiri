@@ -3,6 +3,8 @@ package org.example.toy_zhiri.subscription.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.exception.ConflictException;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.subscription.dto.CreateSubscriptionPlanRequest;
 import org.example.toy_zhiri.subscription.dto.SubscriptionPlanResponse;
 import org.example.toy_zhiri.subscription.dto.UpdateSubscriptionPlanRequest;
@@ -49,7 +51,7 @@ public class SubscriptionPlanService {
      */
     public SubscriptionPlanResponse getPlanById(UUID planId) {
         SubscriptionPlan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Тариф не найден"));
+                .orElseThrow(() -> new NotFoundException("Тариф не найден"));
         return mapToResponse(plan);
     }
 
@@ -59,7 +61,7 @@ public class SubscriptionPlanService {
     @Transactional
     public SubscriptionPlanResponse createPlan(CreateSubscriptionPlanRequest request) {
         if (planRepository.existsBySlug(request.getSlug())) {
-            throw new RuntimeException("Тариф с таким slug уже существует");
+            throw new ConflictException("Тариф с таким slug уже существует");
         }
 
         SubscriptionPlan plan = SubscriptionPlan.builder()
@@ -82,7 +84,7 @@ public class SubscriptionPlanService {
     @Transactional
     public SubscriptionPlanResponse updatePlan(UUID planId, UpdateSubscriptionPlanRequest request) {
         SubscriptionPlan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Тариф не найден"));
+                .orElseThrow(() -> new NotFoundException("Тариф не найден"));
 
         if (request.getName() != null) {
             plan.setName(request.getName());
@@ -112,7 +114,7 @@ public class SubscriptionPlanService {
     @Transactional
     public MessageResponse deactivatePlan(UUID planId) {
         SubscriptionPlan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Тариф не найден"));
+                .orElseThrow(() -> new NotFoundException("Тариф не найден"));
 
         plan.setStatus(SubscriptionPlanStatus.INACTIVE);
         planRepository.save(plan);
@@ -128,7 +130,7 @@ public class SubscriptionPlanService {
     @Transactional
     public MessageResponse activatePlan(UUID planId) {
         SubscriptionPlan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Тариф не найден"));
+                .orElseThrow(() -> new NotFoundException("Тариф не найден"));
 
         plan.setStatus(SubscriptionPlanStatus.ACTIVE);
         planRepository.save(plan);

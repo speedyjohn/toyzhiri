@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.AdminChangeServiceActiveStatusRequest;
 import org.example.toy_zhiri.admin.dto.AdminChangeServiceApprovalStatusRequest;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.notification.enums.NotificationType;
 import org.example.toy_zhiri.notification.enums.RelatedEntityType;
 import org.example.toy_zhiri.notification.service.NotificationService;
@@ -53,12 +54,12 @@ public class AdminServiceService {
      * @param serviceId идентификатор услуги
      * @param request статус активности
      * @return обновленная информация об услуге
-     * @throws RuntimeException если услуга не найдена
+     * @throws NotFoundException если услуга не найдена
      */
     @Transactional
     public ServiceResponse changeActiveStatus(UUID serviceId, AdminChangeServiceActiveStatusRequest request) {
         Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга с ID " + serviceId + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга с ID " + serviceId + " не найдена"));
 
         service.setIsActive(request.getIsActive());
         serviceRepository.save(service);
@@ -72,12 +73,12 @@ public class AdminServiceService {
      * @param serviceId идентификатор услуги
      * @param request статус одобрения и причина отказа (если есть)
      * @return обновленная информация об услуге
-     * @throws RuntimeException если услуга не найдена
+     * @throws NotFoundException если услуга не найдена
      */
     @Transactional
     public ServiceResponse changeApprovalStatus(UUID serviceId, AdminChangeServiceApprovalStatusRequest request) {
         Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга с ID " + serviceId + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга с ID " + serviceId + " не найдена"));
 
         service.setIsApproved(request.getIsApproved());
 
@@ -118,12 +119,12 @@ public class AdminServiceService {
      *
      * @param serviceId идентификатор услуги
      * @return сообщение об успешном удалении
-     * @throws RuntimeException если услуга не найдена
+     * @throws NotFoundException если услуга не найдена
      */
     @Transactional
     public MessageResponse deleteService(UUID serviceId) {
         Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга с ID " + serviceId + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга с ID " + serviceId + " не найдена"));
 
         String serviceName = service.getName();
         serviceRepository.delete(service);
@@ -138,11 +139,11 @@ public class AdminServiceService {
      *
      * @param serviceId идентификатор услуги
      * @return информация об услуге
-     * @throws RuntimeException если услуга не найдена
+     * @throws NotFoundException если услуга не найдена
      */
     public ServiceResponse getServiceById(UUID serviceId) {
         Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга с ID " + serviceId + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга с ID " + serviceId + " не найдена"));
 
         return serviceService.getServiceById(serviceId, null);
     }

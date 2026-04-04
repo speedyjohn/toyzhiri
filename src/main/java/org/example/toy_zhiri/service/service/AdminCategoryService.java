@@ -3,6 +3,8 @@ package org.example.toy_zhiri.service.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.exception.ConflictException;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.service.dto.CategoryResponse;
 import org.example.toy_zhiri.service.dto.CreateCategoryRequest;
 import org.example.toy_zhiri.service.dto.UpdateCategoryRequest;
@@ -22,7 +24,7 @@ public class AdminCategoryService {
     @Transactional
     public CategoryResponse createCategory(CreateCategoryRequest request) {
         if (categoryRepository.findBySlug(request.getSlug()).isPresent()) {
-            throw new RuntimeException("Категория с таким slug уже существует");
+            throw new ConflictException("Категория с таким slug уже существует");
         }
 
         ServiceCategory category = ServiceCategory.builder()
@@ -42,11 +44,11 @@ public class AdminCategoryService {
     @Transactional
     public CategoryResponse updateCategory(UUID categoryId, UpdateCategoryRequest request) {
         ServiceCategory category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Категория не найдена"));
+                .orElseThrow(() -> new NotFoundException("Категория не найдена"));
 
         if (request.getSlug() != null && !request.getSlug().equals(category.getSlug())) {
             if (categoryRepository.findBySlug(request.getSlug()).isPresent()) {
-                throw new RuntimeException("Категория с таким slug уже существует");
+                throw new ConflictException("Категория с таким slug уже существует");
             }
             category.setSlug(request.getSlug());
         }
@@ -65,7 +67,7 @@ public class AdminCategoryService {
     @Transactional
     public MessageResponse deleteCategory(UUID categoryId) {
         ServiceCategory category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Категория не найдена"));
+                .orElseThrow(() -> new NotFoundException("Категория не найдена"));
 
         categoryRepository.delete(category);
 
@@ -83,7 +85,7 @@ public class AdminCategoryService {
 
     public CategoryResponse getCategoryById(UUID categoryId) {
         ServiceCategory category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Категория не найдена"));
+                .orElseThrow(() -> new NotFoundException("Категория не найдена"));
         return mapToResponse(category);
     }
 

@@ -1,6 +1,7 @@
 package org.example.toy_zhiri.service.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.service.dto.ServiceFilterRequest;
 import org.example.toy_zhiri.service.dto.ServicePageResponse;
 import org.example.toy_zhiri.service.dto.ServiceResponse;
@@ -57,7 +58,7 @@ public class ServiceService {
 
     public ServiceResponse getServiceById(UUID serviceId, UUID userId) {
         Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         // Увеличиваем счетчик просмотров
         Integer currentViews = service.getViewsCount() != null ? service.getViewsCount() : 0;

@@ -2,6 +2,10 @@ package org.example.toy_zhiri.partner.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.toy_zhiri.exception.BadRequestException;
+import org.example.toy_zhiri.exception.ConflictException;
+import org.example.toy_zhiri.exception.InvalidStateException;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.notification.enums.NotificationType;
 import org.example.toy_zhiri.notification.service.NotificationService;
 import org.example.toy_zhiri.partner.dto.PartnerApprovalRequest;
@@ -36,14 +40,14 @@ public class PartnerService {
     @Transactional
     public PartnerResponse registerPartner(UUID userId, PartnerRegistrationRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 
         if (partnerRepository.existsByUserId(userId)) {
-            throw new RuntimeException("Заявка на партнерство уже существует");
+            throw new ConflictException("Заявка на партнерство уже существует");
         }
 
         if (partnerRepository.existsByBin(request.getBin())) {
-            throw new RuntimeException("Партнер с таким ИНН уже зарегистрирован");
+            throw new ConflictException("Партнер с таким ИНН уже зарегистрирован");
         }
 
         Partner partner = Partner.builder()
@@ -74,7 +78,7 @@ public class PartnerService {
      */
     public PartnerResponse getPartnerByUserId(UUID userId) {
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Заявка на партнерство не найдена"));
+                .orElseThrow(() -> new NotFoundException("Заявка на партнерство не найдена"));
 
         return mapToResponse(partner);
     }
@@ -105,14 +109,14 @@ public class PartnerService {
     @Transactional
     public PartnerResponse approvePartner(UUID partnerId, UUID adminId, PartnerApprovalRequest request) {
         Partner partner = partnerRepository.findById(partnerId)
-                .orElseThrow(() -> new RuntimeException("Заявка не найдена"));
+                .orElseThrow(() -> new NotFoundException("Заявка не найдена"));
 
         if (partner.getStatus() != PartnerStatus.PENDING) {
-            throw new RuntimeException("Заявка уже обработана");
+            throw new InvalidStateException("Заявка уже обработана");
         }
 
         User admin = userRepository.findById(adminId)
-                .orElseThrow(() -> new RuntimeException("Администратор не найден"));
+                .orElseThrow(() -> new NotFoundException("Администратор не найден"));
 
         if (request.getApproved()) {
             partner.setStatus(PartnerStatus.APPROVED);
@@ -126,7 +130,7 @@ public class PartnerService {
 
         } else {
             if (request.getRejectionReason() == null || request.getRejectionReason().isBlank()) {
-                throw new RuntimeException("Причина отклонения обязательна");
+                throw new BadRequestException("Причина отклонения обязательна");
             }
 
             partner.setStatus(PartnerStatus.REJECTED);

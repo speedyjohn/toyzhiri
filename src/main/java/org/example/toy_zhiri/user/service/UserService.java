@@ -3,6 +3,8 @@ package org.example.toy_zhiri.user.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.exception.BadRequestException;
+import org.example.toy_zhiri.exception.ConflictException;
 import org.example.toy_zhiri.notification.enums.NotificationType;
 import org.example.toy_zhiri.notification.service.NotificationService;
 import org.example.toy_zhiri.user.dto.ChangePasswordRequest;
@@ -81,7 +83,7 @@ public class UserService {
         if (request.getPhone() != null) {
             userRepository.findByEmail(email).ifPresent(existingUser -> {
                 if (!existingUser.getId().equals(user.getId())) {
-                    throw new RuntimeException("Телефон уже используется другим пользователем");
+                    throw new ConflictException("Телефон уже используется другим пользователем");
                 }
             });
             user.setPhone(request.getPhone());
@@ -103,11 +105,11 @@ public class UserService {
         User user = getUserByEmailOrThrow(email);
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new RuntimeException("Текущий пароль неверен");
+            throw new BadRequestException("Текущий пароль неверен");
         }
 
         if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
-            throw new RuntimeException("Новый пароль должен отличаться от текущего");
+            throw new BadRequestException("Новый пароль должен отличаться от текущего");
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
@@ -134,7 +136,7 @@ public class UserService {
         User user = getUserByEmailOrThrow(email);
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Неверный пароль. Удаление отменено.");
+            throw new BadRequestException("Неверный пароль. Удаление отменено.");
         }
 
         // Удаляем пользователя (soft delete)

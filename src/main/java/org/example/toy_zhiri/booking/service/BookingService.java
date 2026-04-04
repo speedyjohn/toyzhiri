@@ -9,6 +9,11 @@ import org.example.toy_zhiri.booking.dto.RejectBookingRequest;
 import org.example.toy_zhiri.booking.entity.Booking;
 import org.example.toy_zhiri.booking.enums.BookingStatus;
 import org.example.toy_zhiri.booking.repository.BookingRepository;
+import org.example.toy_zhiri.exception.AccessDeniedException;
+import org.example.toy_zhiri.exception.BadRequestException;
+import org.example.toy_zhiri.exception.ConflictException;
+import org.example.toy_zhiri.exception.InvalidStateException;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.notification.enums.NotificationType;
 import org.example.toy_zhiri.notification.enums.RelatedEntityType;
 import org.example.toy_zhiri.notification.service.NotificationService;
@@ -53,17 +58,17 @@ public class BookingService {
     @Transactional
     public BookingResponse createBooking(UUID userId, CreateBookingRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 
         Service service = serviceRepository.findById(request.getServiceId())
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         if (!service.getIsActive() || !service.getIsApproved()) {
-            throw new RuntimeException("Услуга недоступна для бронирования");
+            throw new BadRequestException("Услуга недоступна для бронирования");
         }
 
         if (bookingRepository.existsActiveBookingForServiceOnDate(service.getId(), request.getEventDate())) {
-            throw new RuntimeException("Выбранная дата уже занята. Пожалуйста, выберите другую дату.");
+            throw new ConflictException("Выбранная дата уже занята. Пожалуйста, выберите другую дату.");
         }
 
         boolean isBlockedByPartner = availabilityRepository
@@ -72,7 +77,7 @@ public class BookingService {
                 .orElse(false);
 
         if (isBlockedByPartner) {
-            throw new RuntimeException("Выбранная дата недоступна. Партнёр заблокировал эту дату.");
+            throw new ConflictException("Выбранная дата недоступна. Партнёр заблокировал эту дату.");
         }
 
         Partner partner = service.getPartner();
@@ -98,7 +103,6 @@ public class BookingService {
         service.setBookingsCount(service.getBookingsCount() + 1);
         serviceRepository.save(service);
 
-        // Уведомление партнёру о новом заказе
         notificationService.send(
                 partner.getUser().getId(),
                 NotificationType.BOOKING_CREATED,
@@ -154,7 +158,7 @@ public class BookingService {
         Booking booking = findBookingOrThrow(bookingId);
 
         if (!booking.getUser().getId().equals(userId)) {
-            throw new RuntimeException("У вас нет доступа к этому бронированию");
+            throw new AccessDeniedException("У вас нет доступа к этому бронированию");
         }
 
         return mapToResponse(booking);
@@ -169,12 +173,12 @@ public class BookingService {
         Booking booking = findBookingOrThrow(bookingId);
 
         if (!booking.getUser().getId().equals(userId)) {
-            throw new RuntimeException("У вас нет доступа к этому бронированию");
+            throw new AccessDeniedException("У вас нет доступа к этому бронированию");
         }
 
         if (booking.getStatus() != BookingStatus.PENDING_CONFIRMATION
                 && booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new RuntimeException(
+            throw new InvalidStateException(
                     "Отменить можно только бронирование со статусом PENDING_CONFIRMATION или CONFIRMED. " +
                             "Текущий статус: " + booking.getStatus()
             );
@@ -185,7 +189,6 @@ public class BookingService {
 
         Booking saved = bookingRepository.save(booking);
 
-        // Уведомление партнёру об отмене
         notificationService.send(
                 booking.getPartner().getUser().getId(),
                 NotificationType.BOOKING_CANCELLED,
@@ -209,18 +212,18 @@ public class BookingService {
         Booking booking = findBookingOrThrow(bookingId);
 
         if (!booking.getUser().getId().equals(userId)) {
-            throw new RuntimeException("У вас нет доступа к этому бронированию");
+            throw new AccessDeniedException("У вас нет доступа к этому бронированию");
         }
 
         if (booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new RuntimeException(
+            throw new InvalidStateException(
                     "Подтвердить завершение можно только для бронирования со статусом CONFIRMED. " +
                             "Текущий статус: " + booking.getStatus()
             );
         }
 
         if (Boolean.TRUE.equals(booking.getClientConfirmed())) {
-            throw new RuntimeException("Вы уже подтвердили завершение сделки");
+            throw new ConflictException("Вы уже подтвердили завершение сделки");
         }
 
         booking.setClientConfirmed(true);
@@ -232,7 +235,6 @@ public class BookingService {
 
         Booking saved = bookingRepository.save(booking);
 
-        // Уведомление партнёру, что клиент подтвердил
         notificationService.send(
                 booking.getPartner().getUser().getId(),
                 NotificationType.BOOKING_COMPLETION_CONFIRMED,
@@ -243,7 +245,6 @@ public class BookingService {
                 booking.getId()
         );
 
-        // Если оба подтвердили — уведомляем обоих о завершении
         if (saved.getStatus() == BookingStatus.COMPLETED) {
             sendCompletionNotifications(saved);
         }
@@ -273,7 +274,7 @@ public class BookingService {
         Booking booking = findBookingOrThrow(bookingId);
 
         if (!booking.getPartner().getId().equals(partner.getId())) {
-            throw new RuntimeException("У вас нет доступа к этому бронированию");
+            throw new AccessDeniedException("У вас нет доступа к этому бронированию");
         }
 
         return mapToResponse(booking);
@@ -289,11 +290,11 @@ public class BookingService {
         Booking booking = findBookingOrThrow(bookingId);
 
         if (!booking.getPartner().getId().equals(partner.getId())) {
-            throw new RuntimeException("У вас нет доступа к этому бронированию");
+            throw new AccessDeniedException("У вас нет доступа к этому бронированию");
         }
 
         if (booking.getStatus() != BookingStatus.PENDING_CONFIRMATION) {
-            throw new RuntimeException(
+            throw new InvalidStateException(
                     "Подтвердить можно только бронирование со статусом PENDING_CONFIRMATION. " +
                             "Текущий статус: " + booking.getStatus()
             );
@@ -304,7 +305,6 @@ public class BookingService {
 
         Booking saved = bookingRepository.save(booking);
 
-        // Уведомление клиенту о подтверждении
         notificationService.send(
                 booking.getUser().getId(),
                 NotificationType.BOOKING_CONFIRMED,
@@ -328,11 +328,11 @@ public class BookingService {
         Booking booking = findBookingOrThrow(bookingId);
 
         if (!booking.getPartner().getId().equals(partner.getId())) {
-            throw new RuntimeException("У вас нет доступа к этому бронированию");
+            throw new AccessDeniedException("У вас нет доступа к этому бронированию");
         }
 
         if (booking.getStatus() != BookingStatus.PENDING_CONFIRMATION) {
-            throw new RuntimeException(
+            throw new InvalidStateException(
                     "Отклонить можно только бронирование со статусом PENDING_CONFIRMATION. " +
                             "Текущий статус: " + booking.getStatus()
             );
@@ -344,7 +344,6 @@ public class BookingService {
 
         Booking saved = bookingRepository.save(booking);
 
-        // Уведомление клиенту об отклонении
         String message = "Бронирование отклонено — " + booking.getService().getName();
         if (request.getRejectionReason() != null && !request.getRejectionReason().isBlank()) {
             message += ". Причина: " + request.getRejectionReason();
@@ -372,18 +371,18 @@ public class BookingService {
         Booking booking = findBookingOrThrow(bookingId);
 
         if (!booking.getPartner().getId().equals(partner.getId())) {
-            throw new RuntimeException("У вас нет доступа к этому бронированию");
+            throw new AccessDeniedException("У вас нет доступа к этому бронированию");
         }
 
         if (booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new RuntimeException(
+            throw new InvalidStateException(
                     "Подтвердить завершение можно только для бронирования со статусом CONFIRMED. " +
                             "Текущий статус: " + booking.getStatus()
             );
         }
 
         if (Boolean.TRUE.equals(booking.getPartnerConfirmed())) {
-            throw new RuntimeException("Вы уже подтвердили завершение сделки");
+            throw new ConflictException("Вы уже подтвердили завершение сделки");
         }
 
         booking.setPartnerConfirmed(true);
@@ -395,7 +394,6 @@ public class BookingService {
 
         Booking saved = bookingRepository.save(booking);
 
-        // Уведомление клиенту, что партнёр подтвердил
         notificationService.send(
                 booking.getUser().getId(),
                 NotificationType.BOOKING_COMPLETION_CONFIRMED,
@@ -406,7 +404,6 @@ public class BookingService {
                 booking.getId()
         );
 
-        // Если оба подтвердили — уведомляем обоих о завершении
         if (saved.getStatus() == BookingStatus.COMPLETED) {
             sendCompletionNotifications(saved);
         }
@@ -427,17 +424,13 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    // =========================================================
-    // ПУБЛИЧНЫЕ МЕТОДЫ (доступны всем)
-    // =========================================================
-
     /**
      * Возвращает недоступные даты для услуги за указанный период.
      * Объединяет даты, заблокированные партнёром, и даты с активными бронированиями.
      */
     public UnavailableDatesResponse getUnavailableDates(UUID serviceId, LocalDate from, LocalDate to) {
         serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         List<LocalDate> blockedByPartner = availabilityRepository
                 .findByServiceIdAndDateBetweenOrderByDateAsc(serviceId, from, to)
@@ -462,22 +455,11 @@ public class BookingService {
                 .build();
     }
 
-    // =========================================================
-    // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
-    // =========================================================
-
-    /**
-     * Переводит бронирование в статус COMPLETED.
-     * Вызывается когда оба участника подтвердили завершение сделки.
-     */
     private void completeBooking(Booking booking) {
         booking.setStatus(BookingStatus.COMPLETED);
         booking.setCompletedAt(LocalDateTime.now());
     }
 
-    /**
-     * Отправляет уведомления обоим участникам о завершении сделки.
-     */
     private void sendCompletionNotifications(Booking booking) {
         String serviceName = booking.getService().getName();
         String date = booking.getEventDate().toString();
@@ -504,12 +486,12 @@ public class BookingService {
 
     private Booking findBookingOrThrow(UUID bookingId) {
         return bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Бронирование не найдено"));
+                .orElseThrow(() -> new NotFoundException("Бронирование не найдено"));
     }
 
     private Partner findPartnerOrThrow(UUID userId) {
         return partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнёр не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
     }
 
     private BookingResponse mapToResponse(Booking booking) {
@@ -537,7 +519,6 @@ public class BookingService {
                 .clientConfirmed(booking.getClientConfirmed())
                 .partnerConfirmed(booking.getPartnerConfirmed())
                 .serviceUrl("/services/" + booking.getService().getSlug())
-                // TODO: заменить на реальный chatId после реализации модуля чата
                 .chatUrl(null)
                 .expiresAt(booking.getExpiresAt())
                 .confirmedAt(booking.getConfirmedAt())

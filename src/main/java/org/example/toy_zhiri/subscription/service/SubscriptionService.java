@@ -2,6 +2,7 @@ package org.example.toy_zhiri.subscription.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.toy_zhiri.exception.*;
 import org.example.toy_zhiri.partner.entity.Partner;
 import org.example.toy_zhiri.partner.repository.PartnerRepository;
 import org.example.toy_zhiri.service.entity.Service;
@@ -44,26 +45,26 @@ public class SubscriptionService {
     @Transactional
     public SubscriptionResponse subscribe(UUID userId, UUID serviceId, UUID planId) {
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнёр не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
 
         Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         // Проверяем, что услуга принадлежит этому партнёру
         if (!service.getPartner().getId().equals(partner.getId())) {
-            throw new RuntimeException("Услуга не принадлежит вам");
+            throw new AccessDeniedException("Услуга не принадлежит вам");
         }
 
         SubscriptionPlan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Тариф не найден"));
+                .orElseThrow(() -> new NotFoundException("Тариф не найден"));
 
         if (plan.getStatus() != SubscriptionPlanStatus.ACTIVE) {
-            throw new RuntimeException("Тариф недоступен");
+            throw new BadRequestException("Тариф недоступен");
         }
 
         // Проверяем, нет ли уже активной подписки на эту услугу
         if (subscriptionRepository.existsByServiceIdAndStatus(serviceId, SubscriptionStatus.ACTIVE)) {
-            throw new RuntimeException("У этой услуги уже есть активная подписка");
+            throw new ConflictException("У этой услуги уже есть активная подписка");
         }
 
         Subscription subscription = Subscription.builder()
@@ -92,18 +93,18 @@ public class SubscriptionService {
      */
     public SubscriptionResponse getActiveSubscriptionByService(UUID userId, UUID serviceId) {
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнёр не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
 
         Service service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         if (!service.getPartner().getId().equals(partner.getId())) {
-            throw new RuntimeException("Услуга не принадлежит вам");
+            throw new AccessDeniedException("Услуга не принадлежит вам");
         }
 
         Subscription subscription = subscriptionRepository
                 .findByServiceIdAndStatus(serviceId, SubscriptionStatus.ACTIVE)
-                .orElseThrow(() -> new RuntimeException("Активная подписка для этой услуги не найдена"));
+                .orElseThrow(() -> new NotFoundException("Активная подписка для этой услуги не найдена"));
 
         return mapToResponse(subscription);
     }
@@ -113,7 +114,7 @@ public class SubscriptionService {
      */
     public Page<SubscriptionResponse> getSubscriptionHistory(UUID userId, Pageable pageable) {
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнёр не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
 
         return subscriptionRepository
                 .findByPartnerIdOrderByCreatedAtDesc(partner.getId(), pageable)
@@ -126,10 +127,10 @@ public class SubscriptionService {
     @Transactional
     public Subscription activateSubscription(UUID subscriptionId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(() -> new RuntimeException("Подписка не найдена"));
+                .orElseThrow(() -> new NotFoundException("Подписка не найдена"));
 
         if (subscription.getStatus() != SubscriptionStatus.PENDING) {
-            throw new RuntimeException("Подписка не ожидает оплаты");
+            throw new InvalidStateException("Подписка не ожидает оплаты");
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -147,17 +148,17 @@ public class SubscriptionService {
     @Transactional
     public SubscriptionResponse cancelSubscription(UUID userId, UUID subscriptionId) {
         Partner partner = partnerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Партнёр не найден"));
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
 
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(() -> new RuntimeException("Подписка не найдена"));
+                .orElseThrow(() -> new NotFoundException("Подписка не найдена"));
 
         if (!subscription.getPartner().getId().equals(partner.getId())) {
-            throw new RuntimeException("Подписка не принадлежит вам");
+            throw new AccessDeniedException("Подписка не принадлежит вам");
         }
 
         if (subscription.getStatus() != SubscriptionStatus.PENDING) {
-            throw new RuntimeException("Можно отменить только подписку в статусе ожидания");
+            throw new InvalidStateException("Можно отменить только подписку в статусе ожидания");
         }
 
         subscription.setStatus(SubscriptionStatus.CANCELLED);

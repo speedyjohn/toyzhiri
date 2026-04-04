@@ -3,6 +3,8 @@ package org.example.toy_zhiri.service.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.exception.BadRequestException;
+import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.service.dto.AddToCartRequest;
 import org.example.toy_zhiri.service.dto.CartResponse;
 import org.example.toy_zhiri.service.dto.ServiceResponse;
@@ -29,13 +31,13 @@ public class CartService {
     @Transactional
     public MessageResponse addToCart(UUID userId, AddToCartRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 
         Service service = serviceRepository.findById(request.getServiceId())
-                .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
 
         if (!service.getIsActive() || !service.getIsApproved()) {
-            throw new RuntimeException("Услуга недоступна");
+            throw new BadRequestException("Услуга недоступна");
         }
 
         CartItem cartItem = cartItemRepository.findByUserIdAndServiceId(userId, request.getServiceId())
@@ -58,7 +60,7 @@ public class CartService {
     @Transactional
     public MessageResponse removeFromCart(UUID userId, UUID serviceId) {
         if (cartItemRepository.findByUserIdAndServiceId(userId, serviceId).isEmpty()) {
-            throw new RuntimeException("Услуга не найдена в корзине");
+            throw new NotFoundException("Услуга не найдена в корзине");
         }
 
         cartItemRepository.deleteByUserIdAndServiceId(userId, serviceId);
