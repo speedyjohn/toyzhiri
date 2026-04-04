@@ -39,6 +39,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationSettingsRepository settingsRepository;
     private final UserRepository userRepository;
+    private final SmsNotificationService smsNotificationService;
 
     // =========================================================
     // СОЗДАНИЕ УВЕДОМЛЕНИЙ (вызывается из других сервисов)
@@ -86,7 +87,8 @@ public class NotificationService {
 
         log.info("Уведомление [{}] отправлено пользователю {}: {}", type, userId, title);
 
-        // TODO: В будущем — диспатч на email/SMS каналы
+        // SMS-канал
+        dispatchSms(user, title, message);
     }
 
     /**
@@ -169,6 +171,19 @@ public class NotificationService {
     // =========================================================
     // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
     // =========================================================
+
+    /**
+     * Отправляет SMS, если канал включён в настройках пользователя.
+     */
+    private void dispatchSms(User user, String title, String message) {
+        boolean smsEnabled = settingsRepository.findByUserId(user.getId())
+                .map(NotificationSettings::getSmsEnabled)
+                .orElse(false);
+
+        if (smsEnabled && user.getPhone() != null && !user.getPhone().isBlank()) {
+            smsNotificationService.send(user.getPhone(), title, message);
+        }
+    }
 
     /**
      * Проверяет, включён ли данный тип уведомлений в настройках пользователя.
