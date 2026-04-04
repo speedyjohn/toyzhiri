@@ -3,6 +3,9 @@ package org.example.toy_zhiri.payment.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.toy_zhiri.notification.enums.NotificationType;
+import org.example.toy_zhiri.notification.enums.RelatedEntityType;
+import org.example.toy_zhiri.notification.service.NotificationService;
 import org.example.toy_zhiri.payment.dto.PaymentRequest;
 import org.example.toy_zhiri.payment.dto.PaymentResponse;
 import org.example.toy_zhiri.payment.enums.PaymentMethod;
@@ -30,6 +33,7 @@ public class PaymentService {
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionService subscriptionService;
     private final PartnerRepository partnerRepository;
+    private final NotificationService notificationService;
 
     /**
      * Обрабатывает оплату подписки.
@@ -51,11 +55,25 @@ public class PaymentService {
             throw new RuntimeException("Подписка не ожидает оплаты");
         }
 
-        return switch (request.getPaymentMethod()) {
+        PaymentResponse response = switch (request.getPaymentMethod()) {
             case KASPI -> processKaspiPayment(subscription);
             case BANK_CARD -> processBankCardPayment(subscription);
             case GOOGLE_PAY, APPLE_PAY -> processDigitalWalletPayment(subscription, request.getPaymentMethod());
         };
+
+        // Уведомление партнёру об успешной оплате
+        Subscription activated = subscriptionRepository.findById(subscription.getId()).orElse(subscription);
+        notificationService.send(
+                userId,
+                NotificationType.PAYMENT_SUCCESS,
+                "Оплата прошла успешно",
+                "Оплата тарифа «" + subscription.getPlan().getName() + "» прошла успешно. " +
+                        "Подписка активна до " + activated.getExpiresAt().toLocalDate(),
+                RelatedEntityType.SUBSCRIPTION,
+                subscription.getId()
+        );
+
+        return response;
     }
 
     /**

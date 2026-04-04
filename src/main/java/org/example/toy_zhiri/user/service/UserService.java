@@ -3,6 +3,8 @@ package org.example.toy_zhiri.user.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.notification.enums.NotificationType;
+import org.example.toy_zhiri.notification.service.NotificationService;
 import org.example.toy_zhiri.user.dto.ChangePasswordRequest;
 import org.example.toy_zhiri.user.dto.UpdateProfileRequest;
 import org.example.toy_zhiri.user.dto.UserInfoResponse;
@@ -24,12 +26,10 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
 
     /**
      * Получает пользователя по email.
-     *
-     * @param email email пользователя
-     * @return Optional<User> с пользователь, если найден
      */
     public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);
@@ -37,10 +37,6 @@ public class UserService {
 
     /**
      * Получает пользователя по email или выбрасывает исключение.
-     *
-     * @param email email пользователя
-     * @return User пользователь
-     * @throws UsernameNotFoundException если пользователь не найден
      */
     public User getUserByEmailOrThrow(String email) {
         return userRepository.findByEmail(email)
@@ -49,9 +45,6 @@ public class UserService {
 
     /**
      * Получает идентификатор пользователя по email.
-     *
-     * @param email email пользователя
-     * @return UUID идентификатор пользователя или null, если не найден
      */
     public UUID getIdByEmail(String email) {
         return userRepository.findByEmail(email)
@@ -61,10 +54,6 @@ public class UserService {
 
     /**
      * Получает информацию о пользователе по email.
-     *
-     * @param email email пользователя
-     * @return UserInfoResponse информация о пользователе
-     * @throws UsernameNotFoundException если пользователь не найден
      */
     public UserInfoResponse getUserInfoByEmail(String email) {
         User user = userRepository.findByEmail(email)
@@ -76,10 +65,6 @@ public class UserService {
     /**
      * Обновляет профиль пользователя.
      * Пользователь может изменить только: firstName, lastName, phone, city.
-     *
-     * @param email email пользователя
-     * @param request данные для обновления
-     * @return обновленная информация о пользователе
      */
     @Transactional
     public UserInfoResponse updateProfile(String email, UpdateProfileRequest request) {
@@ -112,11 +97,6 @@ public class UserService {
 
     /**
      * Изменяет пароль пользователя.
-     *
-     * @param email email пользователя
-     * @param request данные для смены пароля
-     * @return MessageResponse сообщение об успехе
-     * @throws RuntimeException если текущий пароль неверный
      */
     @Transactional
     public MessageResponse changePassword(String email, ChangePasswordRequest request) {
@@ -133,7 +113,13 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
-        // TODO: Отправить уведомление на email о смене пароля когда будет email сервис
+        // Уведомление о смене пароля
+        notificationService.send(
+                user.getId(),
+                NotificationType.PASSWORD_CHANGED,
+                "Пароль изменён",
+                "Ваш пароль был изменён. Если это были не вы — обратитесь в поддержку"
+        );
 
         return MessageResponse.builder()
                 .message("Пароль успешно изменен")
@@ -142,11 +128,6 @@ public class UserService {
 
     /**
      * Удаляет аккаунт пользователя (soft delete).
-     *
-     * @param email email пользователя
-     * @param request данные для подтверждения удаления
-     * @return MessageResponse сообщение об успехе
-     * @throws RuntimeException если пароль неверный
      */
     @Transactional
     public MessageResponse deleteAccount(String email, DeleteAccountRequest request) {
@@ -156,12 +137,17 @@ public class UserService {
             throw new RuntimeException("Неверный пароль. Удаление отменено.");
         }
 
-        // TODO: Добавить в login history?
-        // TODO: Отправить email о удалении аккаунта
-
         // Удаляем пользователя (soft delete)
         user.setIsActive(false);
         userRepository.save(user);
+
+        // Уведомление о деактивации аккаунта
+        notificationService.send(
+                user.getId(),
+                NotificationType.ACCOUNT_DEACTIVATED,
+                "Аккаунт удалён",
+                "Ваш аккаунт был деактивирован по вашему запросу"
+        );
 
         return MessageResponse.builder()
                 .message("Ваш аккаунт успешно удален")
@@ -170,9 +156,6 @@ public class UserService {
 
     /**
      * Преобразует сущность User в DTO UserInfoResponse.
-     *
-     * @param user сущность пользователя
-     * @return UserInfoResponse DTO с информацией о пользователе
      */
     private UserInfoResponse mapToUserInfoResponse(User user) {
         return UserInfoResponse.builder()

@@ -2,6 +2,8 @@ package org.example.toy_zhiri.partner.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.toy_zhiri.notification.enums.NotificationType;
+import org.example.toy_zhiri.notification.service.NotificationService;
 import org.example.toy_zhiri.partner.dto.PartnerApprovalRequest;
 import org.example.toy_zhiri.partner.dto.PartnerRegistrationRequest;
 import org.example.toy_zhiri.partner.dto.PartnerResponse;
@@ -26,14 +28,10 @@ import java.util.stream.Collectors;
 public class PartnerService {
     private final PartnerRepository partnerRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     /**
      * Регистрирует новую заявку на партнерство с полным профилем.
-     *
-     * @param userId идентификатор пользователя
-     * @param request данные для регистрации партнера (включая обязательные поля)
-     * @return PartnerResponse информация о созданной заявке
-     * @throws RuntimeException если пользователь не найден, заявка уже существует или БИН уже используется
      */
     @Transactional
     public PartnerResponse registerPartner(UUID userId, PartnerRegistrationRequest request) {
@@ -73,10 +71,6 @@ public class PartnerService {
 
     /**
      * Получает заявку партнера по идентификатору пользователя.
-     *
-     * @param userId идентификатор пользователя
-     * @return PartnerResponse информация о заявке партнера
-     * @throws RuntimeException если заявка не найдена
      */
     public PartnerResponse getPartnerByUserId(UUID userId) {
         Partner partner = partnerRepository.findByUserId(userId)
@@ -87,8 +81,6 @@ public class PartnerService {
 
     /**
      * Получает список всех заявок со статусом ожидания.
-     *
-     * @return List<PartnerResponse> список заявок на рассмотрении, отсортированных по дате создания
      */
     public List<PartnerResponse> getPendingPartners() {
         return partnerRepository.findAllByStatusOrderByCreatedAtDesc(PartnerStatus.PENDING)
@@ -99,9 +91,6 @@ public class PartnerService {
 
     /**
      * Получает список всех заявок с указанным статусом.
-     *
-     * @param status статус партнера для фильтрации
-     * @return List<PartnerResponse> список заявок с запрошенным статусом
      */
     public List<PartnerResponse> getAllPartnersByStatus(PartnerStatus status) {
         return partnerRepository.findAllByStatus(status)
@@ -112,12 +101,6 @@ public class PartnerService {
 
     /**
      * Обрабатывает заявку на партнерство (одобряет или отклоняет).
-     *
-     * @param partnerId идентификатор заявки партнера
-     * @param adminId идентификатор администратора
-     * @param request данные решения по заявке
-     * @return PartnerResponse обновленная информация о заявке
-     * @throws RuntimeException если заявка не найдена, уже обработана, администратор не найден или отсутствует причина отклонения
      */
     @Transactional
     public PartnerResponse approvePartner(UUID partnerId, UUID adminId, PartnerApprovalRequest request) {
@@ -152,14 +135,32 @@ public class PartnerService {
         }
 
         Partner updatedPartner = partnerRepository.save(partner);
+
+        // Уведомление пользователю о решении по заявке
+        UUID userId = partner.getUser().getId();
+        if (request.getApproved()) {
+            notificationService.send(
+                    userId,
+                    NotificationType.SYSTEM,
+                    "Заявка одобрена",
+                    "Ваша заявка на партнёрство одобрена! " +
+                            "Теперь вы можете добавлять услуги и принимать заказы"
+            );
+        } else {
+            notificationService.send(
+                    userId,
+                    NotificationType.SYSTEM,
+                    "Заявка отклонена",
+                    "Заявка на партнёрство отклонена. Причина: " +
+                            request.getRejectionReason()
+            );
+        }
+
         return mapToResponse(updatedPartner);
     }
 
     /**
      * Преобразует сущность Partner в DTO PartnerResponse.
-     *
-     * @param partner сущность партнера
-     * @return PartnerResponse DTO с информацией о партнере
      */
     private PartnerResponse mapToResponse(Partner partner) {
         return PartnerResponse.builder()

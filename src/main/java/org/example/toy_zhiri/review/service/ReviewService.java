@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.booking.entity.Booking;
 import org.example.toy_zhiri.booking.enums.BookingStatus;
 import org.example.toy_zhiri.booking.repository.BookingRepository;
+import org.example.toy_zhiri.notification.enums.NotificationType;
+import org.example.toy_zhiri.notification.enums.RelatedEntityType;
+import org.example.toy_zhiri.notification.service.NotificationService;
 import org.example.toy_zhiri.review.dto.CreateReviewRequest;
 import org.example.toy_zhiri.review.dto.ReviewResponse;
 import org.example.toy_zhiri.review.dto.ReviewSummaryResponse;
@@ -35,6 +38,7 @@ public class ReviewService {
     private final BookingRepository bookingRepository;
     private final ServiceRepository serviceRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     /**
      * Клиент оставляет отзыв.
@@ -77,6 +81,18 @@ public class ReviewService {
         Review saved = reviewRepository.save(review);
 
         recalculateServiceRating(booking.getService().getId());
+
+        // Уведомление партнёру о новом отзыве
+        notificationService.send(
+                booking.getPartner().getUser().getId(),
+                NotificationType.REVIEW_RECEIVED,
+                "Новый отзыв",
+                "Новый отзыв (★" + request.getRating() + ") от " +
+                        booking.getUser().getFullName() + " на услугу " +
+                        booking.getService().getName(),
+                RelatedEntityType.REVIEW,
+                saved.getId()
+        );
 
         return mapToResponse(saved);
     }

@@ -9,6 +9,9 @@ import org.example.toy_zhiri.booking.dto.RejectBookingRequest;
 import org.example.toy_zhiri.booking.entity.Booking;
 import org.example.toy_zhiri.booking.enums.BookingStatus;
 import org.example.toy_zhiri.booking.repository.BookingRepository;
+import org.example.toy_zhiri.notification.enums.NotificationType;
+import org.example.toy_zhiri.notification.enums.RelatedEntityType;
+import org.example.toy_zhiri.notification.service.NotificationService;
 import org.example.toy_zhiri.partner.entity.Partner;
 import org.example.toy_zhiri.partner.repository.PartnerRepository;
 import org.example.toy_zhiri.service.dto.UnavailableDatesResponse;
@@ -40,6 +43,7 @@ public class BookingService {
     private final ServiceRepository serviceRepository;
     private final PartnerRepository partnerRepository;
     private final ServiceAvailabilityRepository availabilityRepository;
+    private final NotificationService notificationService;
 
     /**
      * Создаёт новое бронирование.
@@ -93,6 +97,17 @@ public class BookingService {
 
         service.setBookingsCount(service.getBookingsCount() + 1);
         serviceRepository.save(service);
+
+        // Уведомление партнёру о новом заказе
+        notificationService.send(
+                partner.getUser().getId(),
+                NotificationType.BOOKING_CREATED,
+                "Новый заказ",
+                "Новый заказ от " + user.getFullName() + " — " +
+                        service.getName() + ", " + request.getEventDate(),
+                RelatedEntityType.BOOKING,
+                saved.getId()
+        );
 
         return mapToResponse(saved);
     }
@@ -168,7 +183,20 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
         booking.setCancelledAt(LocalDateTime.now());
 
-        return mapToResponse(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        // Уведомление партнёру об отмене
+        notificationService.send(
+                booking.getPartner().getUser().getId(),
+                NotificationType.BOOKING_CANCELLED,
+                "Бронирование отменено",
+                "Клиент " + booking.getUser().getFullName() + " отменил бронирование — " +
+                        booking.getService().getName() + ", " + booking.getEventDate(),
+                RelatedEntityType.BOOKING,
+                booking.getId()
+        );
+
+        return mapToResponse(saved);
     }
 
     /**
@@ -202,7 +230,25 @@ public class BookingService {
             completeBooking(booking);
         }
 
-        return mapToResponse(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        // Уведомление партнёру, что клиент подтвердил
+        notificationService.send(
+                booking.getPartner().getUser().getId(),
+                NotificationType.BOOKING_COMPLETION_CONFIRMED,
+                "Клиент подтвердил завершение",
+                "Клиент " + booking.getUser().getFullName() +
+                        " подтвердил завершение сделки — " + booking.getService().getName(),
+                RelatedEntityType.BOOKING,
+                booking.getId()
+        );
+
+        // Если оба подтвердили — уведомляем обоих о завершении
+        if (saved.getStatus() == BookingStatus.COMPLETED) {
+            sendCompletionNotifications(saved);
+        }
+
+        return mapToResponse(saved);
     }
 
     /**
@@ -256,7 +302,20 @@ public class BookingService {
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setConfirmedAt(LocalDateTime.now());
 
-        return mapToResponse(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        // Уведомление клиенту о подтверждении
+        notificationService.send(
+                booking.getUser().getId(),
+                NotificationType.BOOKING_CONFIRMED,
+                "Бронирование подтверждено",
+                "Ваше бронирование подтверждено — " +
+                        booking.getService().getName() + ", " + booking.getEventDate(),
+                RelatedEntityType.BOOKING,
+                booking.getId()
+        );
+
+        return mapToResponse(saved);
     }
 
     /**
@@ -283,7 +342,23 @@ public class BookingService {
         booking.setRejectionReason(request.getRejectionReason());
         booking.setRejectedAt(LocalDateTime.now());
 
-        return mapToResponse(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        // Уведомление клиенту об отклонении
+        String message = "Бронирование отклонено — " + booking.getService().getName();
+        if (request.getRejectionReason() != null && !request.getRejectionReason().isBlank()) {
+            message += ". Причина: " + request.getRejectionReason();
+        }
+        notificationService.send(
+                booking.getUser().getId(),
+                NotificationType.BOOKING_REJECTED,
+                "Бронирование отклонено",
+                message,
+                RelatedEntityType.BOOKING,
+                booking.getId()
+        );
+
+        return mapToResponse(saved);
     }
 
     /**
@@ -318,7 +393,25 @@ public class BookingService {
             completeBooking(booking);
         }
 
-        return mapToResponse(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        // Уведомление клиенту, что партнёр подтвердил
+        notificationService.send(
+                booking.getUser().getId(),
+                NotificationType.BOOKING_COMPLETION_CONFIRMED,
+                "Партнёр подтвердил завершение",
+                "Партнёр " + booking.getPartner().getCompanyName() +
+                        " подтвердил завершение сделки — " + booking.getService().getName(),
+                RelatedEntityType.BOOKING,
+                booking.getId()
+        );
+
+        // Если оба подтвердили — уведомляем обоих о завершении
+        if (saved.getStatus() == BookingStatus.COMPLETED) {
+            sendCompletionNotifications(saved);
+        }
+
+        return mapToResponse(saved);
     }
 
     /**
@@ -380,6 +473,33 @@ public class BookingService {
     private void completeBooking(Booking booking) {
         booking.setStatus(BookingStatus.COMPLETED);
         booking.setCompletedAt(LocalDateTime.now());
+    }
+
+    /**
+     * Отправляет уведомления обоим участникам о завершении сделки.
+     */
+    private void sendCompletionNotifications(Booking booking) {
+        String serviceName = booking.getService().getName();
+        String date = booking.getEventDate().toString();
+
+        notificationService.send(
+                booking.getUser().getId(),
+                NotificationType.BOOKING_COMPLETED,
+                "Сделка завершена",
+                "Сделка завершена — " + serviceName + ", " + date,
+                RelatedEntityType.BOOKING,
+                booking.getId()
+        );
+
+        notificationService.send(
+                booking.getPartner().getUser().getId(),
+                NotificationType.BOOKING_COMPLETED,
+                "Сделка завершена",
+                "Сделка завершена — " + serviceName + ", " + date +
+                        ". Клиент: " + booking.getUser().getFullName(),
+                RelatedEntityType.BOOKING,
+                booking.getId()
+        );
     }
 
     private Booking findBookingOrThrow(UUID bookingId) {

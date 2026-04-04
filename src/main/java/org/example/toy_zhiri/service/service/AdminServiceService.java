@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.AdminChangeServiceActiveStatusRequest;
 import org.example.toy_zhiri.admin.dto.AdminChangeServiceApprovalStatusRequest;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.notification.enums.NotificationType;
+import org.example.toy_zhiri.notification.enums.RelatedEntityType;
+import org.example.toy_zhiri.notification.service.NotificationService;
 import org.example.toy_zhiri.service.dto.ServiceResponse;
 import org.example.toy_zhiri.service.entity.Service;
 import org.example.toy_zhiri.service.repository.ServiceRepository;
@@ -19,6 +22,7 @@ import java.util.UUID;
 public class AdminServiceService {
     private final ServiceRepository serviceRepository;
     private final ServiceService serviceService;
+    private final NotificationService notificationService;
 
     /**
      * Получает список всех услуг (включая неодобренные и неактивные).
@@ -84,8 +88,27 @@ public class AdminServiceService {
 
         serviceRepository.save(service);
 
-        // TODO: Отправить уведомление партнёру об одобрении/отклонении услуги
-        // TODO: Если отклонено - можно сохранить причину в отдельной таблице или отправить партнёру
+        // Уведомление партнёру об одобрении/отклонении услуги
+        UUID partnerUserId = service.getPartner().getUser().getId();
+        if (request.getIsApproved()) {
+            notificationService.send(
+                    partnerUserId,
+                    NotificationType.SERVICE_APPROVED,
+                    "Услуга одобрена",
+                    "Ваша услуга «" + service.getName() + "» одобрена и опубликована",
+                    RelatedEntityType.SERVICE,
+                    service.getId()
+            );
+        } else {
+            notificationService.send(
+                    partnerUserId,
+                    NotificationType.SERVICE_REJECTED,
+                    "Услуга отклонена",
+                    "Ваша услуга «" + service.getName() + "» отклонена модератором",
+                    RelatedEntityType.SERVICE,
+                    service.getId()
+            );
+        }
 
         return serviceService.getServiceById(serviceId, null);
     }
