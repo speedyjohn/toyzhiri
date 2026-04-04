@@ -7,10 +7,20 @@ import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
+import org.springdoc.core.models.GroupedOpenApi;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * Настройки и описание для Swagger.
+ *
+ * Группы:
+ * - Public       — публичные эндпоинты (каталог услуг, партнёры, тарифы, публичные отзывы)
+ * - Auth         — регистрация, вход, refresh токен
+ * - Client       — действия клиента (бронирования, корзина, избранное, отзывы, профиль, файлы)
+ * - Partner      — личный кабинет партнёра (услуги, бронирования, подписки, оплата, файлы)
+ * - Notifications — уведомления и настройки уведомлений
+ * - Admin        — административная панель
  */
 @Configuration
 @OpenAPIDefinition(
@@ -38,4 +48,71 @@ import org.springframework.context.annotation.Configuration;
         bearerFormat = "JWT",
         in = SecuritySchemeIn.HEADER
 )
-public class OpenApiConfig {}
+public class OpenApiConfig {
+
+    @Bean
+    public GroupedOpenApi publicApi() {
+        return GroupedOpenApi.builder()
+                .group("1. Public")
+                .pathsToMatch(
+                        "/api/v1/services/**",
+                        "/api/v1/partners/**",
+                        "/api/v1/subscription-plans/**",
+                        "/api/v1/reviews/service/**",
+                        "/api/v1/reviews/partner/**"
+                )
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi authApi() {
+        return GroupedOpenApi.builder()
+                .group("2. Auth")
+                .pathsToMatch("/api/v1/auth/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi clientApi() {
+        return GroupedOpenApi.builder()
+                .group("3. Client")
+                .pathsToMatch(
+                        "/api/v1/users/**",
+                        "/api/v1/bookings/**",
+                        "/api/v1/cart/**",
+                        "/api/v1/favorites/**",
+                        "/api/v1/reviews/**",
+                        "/api/v1/files/**"
+                )
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi partnerApi() {
+        return GroupedOpenApi.builder()
+                .group("4. Partner")
+                .pathsToMatch(
+                        "/api/v1/partner/**",
+                        "/api/v1/subscriptions/**",
+                        "/api/v1/payments/**",
+                        "/api/v1/files/**"
+                )
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi notificationsApi() {
+        return GroupedOpenApi.builder()
+                .group("5. Notifications")
+                .pathsToMatch("/api/v1/notifications/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi adminApi() {
+        return GroupedOpenApi.builder()
+                .group("6. Admin")
+                .pathsToMatch("/api/v1/admin/**")
+                .build();
+    }
+}
