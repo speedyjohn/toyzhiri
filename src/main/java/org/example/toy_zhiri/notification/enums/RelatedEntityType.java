@@ -9,5 +9,6 @@ public enum RelatedEntityType {
     SERVICE,
     REVIEW,
     SUBSCRIPTION,
-    USER
+    USER,
+    CHAT
 }

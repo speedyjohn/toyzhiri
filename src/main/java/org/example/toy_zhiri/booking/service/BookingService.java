@@ -9,6 +9,7 @@ import org.example.toy_zhiri.booking.dto.RejectBookingRequest;
 import org.example.toy_zhiri.booking.entity.Booking;
 import org.example.toy_zhiri.booking.enums.BookingStatus;
 import org.example.toy_zhiri.booking.repository.BookingRepository;
+import org.example.toy_zhiri.chat.repository.ChatRepository;
 import org.example.toy_zhiri.exception.AccessDeniedException;
 import org.example.toy_zhiri.exception.BadRequestException;
 import org.example.toy_zhiri.exception.ConflictException;
@@ -49,6 +50,7 @@ public class BookingService {
     private final PartnerRepository partnerRepository;
     private final ServiceAvailabilityRepository availabilityRepository;
     private final NotificationService notificationService;
+    private final ChatRepository chatRepository;
 
     /**
      * Создаёт новое бронирование.
@@ -494,6 +496,13 @@ public class BookingService {
                 .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
     }
 
+    private String buildChatUrl(Booking booking) {
+        return chatRepository
+                .findByUserIdAndPartnerId(booking.getUser().getId(), booking.getPartner().getId())
+                .map(chat -> "/chat/" + chat.getId())
+                .orElse(null);
+    }
+
     private BookingResponse mapToResponse(Booking booking) {
         return BookingResponse.builder()
                 .id(booking.getId())
@@ -519,7 +528,7 @@ public class BookingService {
                 .clientConfirmed(booking.getClientConfirmed())
                 .partnerConfirmed(booking.getPartnerConfirmed())
                 .serviceUrl("/services/" + booking.getService().getSlug())
-                .chatUrl(null)
+                .chatUrl(buildChatUrl(booking))
                 .expiresAt(booking.getExpiresAt())
                 .confirmedAt(booking.getConfirmedAt())
                 .rejectedAt(booking.getRejectedAt())

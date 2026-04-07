@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: local # local/prod
   datasource:
     url: jdbc:postgresql://localhost:5432/toyzhiri
     username: username

@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ErrorResponse> handleBaseException(BaseException ex) {
-        log.warn("Business exception: {} - {}", ex.getHttpStatus(), ex.getMessage());
+        log.warn("EXCEPTION: [{}] {} - {}", ex.getClass().getSimpleName(), ex.getHttpStatus(), ex.getMessage());
 
         ErrorResponse response = ErrorResponse.builder()
                 .status(ex.getHttpStatus().value())

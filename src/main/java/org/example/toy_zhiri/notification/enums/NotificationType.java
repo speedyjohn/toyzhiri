@@ -28,5 +28,6 @@ public enum NotificationType {
     PAYMENT_SUCCESS,                // Оплата прошла успешно (для партнёра)
     PROMOTION,                      // Акции и спецпредложения
     EVENT_REMINDER,                 // Напоминание о мероприятии (для клиента)
-    SYSTEM                          // Системные уведомления
+    SYSTEM,                         // Системные уведомления
+    NEW_MESSAGE                     // Новое сообщение в чате
 }

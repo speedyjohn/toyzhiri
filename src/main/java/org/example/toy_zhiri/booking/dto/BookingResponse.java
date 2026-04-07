@@ -55,10 +55,6 @@ public class BookingResponse {
      */
     private String serviceUrl;
 
-    /**
-     * TODO: Ссылка на чат с партнёром. Будет реализовано после разработки модуля чата.
-     * Формат: /chat/{chatId}
-     */
     private String chatUrl;
 
     // Временные метки статусов
