@@ -7,26 +7,42 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Репозиторий для работы с сообщениями в чатах.
+ */
+@Repository
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> {
 
     /**
-     * История сообщений чата с пагинацией (новые сверху).
+     * Возвращает историю сообщений чата с пагинацией (новые сверху).
+     *
+     * @param chatId идентификатор чата
+     * @param pageable параметры пагинации
+     * @return Page<ChatMessage> страница сообщений
      */
     Page<ChatMessage> findByChatIdOrderByCreatedAtDesc(UUID chatId, Pageable pageable);
 
     /**
-     * Последнее сообщение в чате (для превью в списке диалогов).
+     * Находит последнее сообщение в чате (для превью в списке диалогов).
+     *
+     * @param chatId идентификатор чата
+     * @return Optional с последним сообщением
      */
     Optional<ChatMessage> findFirstByChatIdOrderByCreatedAtDesc(UUID chatId);
 
     /**
-     * Количество непрочитанных сообщений в чате для конкретного получателя
-     * (сообщения, отправленные НЕ им).
+     * Подсчитывает количество непрочитанных сообщений в чате
+     * для конкретного получателя (сообщения, отправленные НЕ им).
+     *
+     * @param chatId идентификатор чата
+     * @param recipientId идентификатор получателя
+     * @return количество непрочитанных сообщений
      */
     @Query("""
             SELECT COUNT(m) FROM ChatMessage m
@@ -38,8 +54,11 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
                                  @Param("recipientId") UUID recipientId);
 
     /**
-     * Общее количество непрочитанных сообщений пользователя по всем его чатам
-     * (для бейджика в шапке).
+     * Подсчитывает общее количество непрочитанных сообщений пользователя
+     * по всем его чатам (для бейджика в шапке).
+     *
+     * @param userId идентификатор пользователя
+     * @return общее количество непрочитанных сообщений
      */
     @Query("""
             SELECT COUNT(m) FROM ChatMessage m
@@ -52,6 +71,11 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
     /**
      * Помечает все непрочитанные сообщения чата как прочитанные
      * (только те, что были отправлены НЕ текущим пользователем).
+     *
+     * @param chatId идентификатор чата
+     * @param recipientId идентификатор получателя (тот, кто читает)
+     * @param readAt время прочтения
+     * @return количество обновлённых записей
      */
     @Modifying
     @Query("""

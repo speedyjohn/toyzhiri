@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Сообщение в чате.
+ * Сущность сообщения в чате.
  * Отправитель — всегда User (либо клиент, либо пользователь, привязанный к партнёру).
- * <p>
+ *
  * Сообщение может содержать только текст, только вложения, либо и то, и другое.
  * Гарантия «не пустое» обеспечивается чек-констрейнтом chk_chat_messages_content_or_attachments.
  */
@@ -43,6 +43,10 @@ public class ChatMessage {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    /**
+     * URL-ы прикреплённых файлов (фото, документы).
+     * Файлы предварительно загружаются через POST /api/v1/files/upload.
+     */
     @Type(ListArrayType.class)
     @Column(name = "attachment_urls", columnDefinition = "text[]")
     private List<String> attachmentUrls;

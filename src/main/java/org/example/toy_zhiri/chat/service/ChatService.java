@@ -31,9 +31,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Сервис для работы с чатами.
+ * Сервис для работы с чатами между клиентами и партнёрами.
  * Один диалог на пару (клиент, партнёр).
- * <p>
+ *
  * Является единой точкой записи в БД — REST-контроллер и WebSocket-контроллер
  * используют одни и те же методы. Публикация в STOMP-топики и отправка
  * уведомлений тоже происходят здесь, чтобы любой канал входа давал одинаковый
@@ -54,12 +54,13 @@ public class ChatService {
     /**
      * Возвращает существующий диалог между клиентом и партнёром
      * или создаёт новый, если его ещё нет.
-     * <p>
      * Используется когда клиент хочет написать партнёру (в т.ч. ДО бронирования).
      *
-     * @param clientUserId ID пользователя-клиента
-     * @param partnerId    ID партнёра
-     * @return DTO диалога
+     * @param clientUserId идентификатор пользователя-клиента
+     * @param partnerId идентификатор партнёра
+     * @return ChatResponse DTO диалога
+     * @throws NotFoundException если пользователь или партнёр не найдены
+     * @throws AccessDeniedException если пользователь пытается создать чат сам с собой
      */
     @Transactional
     public ChatResponse getOrCreateChat(UUID clientUserId, UUID partnerId) {
@@ -91,6 +92,12 @@ public class ChatService {
 
     /**
      * Возвращает чат по ID, проверяя что текущий пользователь имеет к нему доступ.
+     *
+     * @param chatId идентификатор чата
+     * @param currentUserId идентификатор текущего пользователя
+     * @return ChatResponse DTO диалога
+     * @throws NotFoundException если чат не найден
+     * @throws AccessDeniedException если пользователь не является участником диалога
      */
     @Transactional(readOnly = true)
     public ChatResponse getChatById(UUID chatId, UUID currentUserId) {
@@ -100,6 +107,10 @@ public class ChatService {
 
     /**
      * Возвращает все диалоги клиента.
+     *
+     * @param userId идентификатор пользователя-клиента
+     * @param pageable параметры пагинации
+     * @return Page<ChatResponse> страница с диалогами
      */
     @Transactional(readOnly = true)
     public Page<ChatResponse> getMyChatsAsClient(UUID userId, Pageable pageable) {
@@ -108,7 +119,13 @@ public class ChatService {
     }
 
     /**
-     * Возвращает все диалоги партнёра (текущий пользователь должен быть владельцем партнёра).
+     * Возвращает все диалоги партнёра.
+     * Текущий пользователь должен быть владельцем партнёра.
+     *
+     * @param currentUserId идентификатор текущего пользователя (владельца партнёра)
+     * @param pageable параметры пагинации
+     * @return Page<ChatResponse> страница с диалогами
+     * @throws NotFoundException если профиль партнёра не найден
      */
     @Transactional(readOnly = true)
     public Page<ChatResponse> getMyChatsAsPartner(UUID currentUserId, Pageable pageable) {
@@ -122,6 +139,9 @@ public class ChatService {
     /**
      * Возвращает общее количество непрочитанных сообщений пользователя
      * по всем его чатам (для бейджика в шапке).
+     *
+     * @param userId идентификатор пользователя
+     * @return общее количество непрочитанных сообщений
      */
     @Transactional(readOnly = true)
     public long getTotalUnreadCount(UUID userId) {
@@ -130,6 +150,13 @@ public class ChatService {
 
     /**
      * Возвращает историю сообщений чата с пагинацией (новые сверху).
+     *
+     * @param chatId идентификатор чата
+     * @param currentUserId идентификатор текущего пользователя
+     * @param pageable параметры пагинации
+     * @return Page<ChatMessageResponse> страница с сообщениями
+     * @throws NotFoundException если чат не найден
+     * @throws AccessDeniedException если пользователь не является участником диалога
      */
     @Transactional(readOnly = true)
     public Page<ChatMessageResponse> getMessages(UUID chatId, UUID currentUserId, Pageable pageable) {
@@ -143,6 +170,15 @@ public class ChatService {
      * Отправляет сообщение в чат.
      * Отправителем может быть любая из сторон диалога (клиент или партнёр).
      * Сообщение должно содержать либо текст, либо вложения, либо и то, и другое.
+     *
+     * @param chatId идентификатор чата
+     * @param senderUserId идентификатор отправителя
+     * @param content текст сообщения (опционально)
+     * @param attachmentUrls URL-ы вложений (опционально)
+     * @return ChatMessageResponse DTO сохранённого сообщения
+     * @throws NotFoundException если чат или пользователь не найдены
+     * @throws AccessDeniedException если отправитель не является участником диалога
+     * @throws BadRequestException если сообщение пустое (нет ни текста, ни вложений)
      */
     @Transactional
     public ChatMessageResponse sendMessage(UUID chatId,
@@ -192,11 +228,15 @@ public class ChatService {
     /**
      * Помечает все непрочитанные сообщения чата как прочитанные
      * для текущего пользователя (только те, что были отправлены не им).
-     * <p>
+     *
      * После обновления публикует read-receipt в персональную очередь
      * другой стороны диалога — отправитель увидит, что его сообщения прочитали.
      *
+     * @param chatId идентификатор чата
+     * @param currentUserId идентификатор текущего пользователя
      * @return количество помеченных сообщений
+     * @throws NotFoundException если чат не найден
+     * @throws AccessDeniedException если пользователь не является участником диалога
      */
     @Transactional
     public int markAsRead(UUID chatId, UUID currentUserId) {
@@ -220,6 +260,12 @@ public class ChatService {
     /**
      * Находит чат и проверяет, что текущий пользователь является
      * либо клиентом, либо владельцем партнёра в этом чате.
+     *
+     * @param chatId идентификатор чата
+     * @param currentUserId идентификатор текущего пользователя
+     * @return найденный и проверенный чат
+     * @throws NotFoundException если чат не найден
+     * @throws AccessDeniedException если пользователь не является участником диалога
      */
     private Chat findChatAndCheckAccess(UUID chatId, UUID currentUserId) {
         Chat chat = chatRepository.findById(chatId)
@@ -238,6 +284,9 @@ public class ChatService {
     /**
      * Отправляет уведомление получателю о новом сообщении.
      * Получатель — это та сторона диалога, которая НЕ является отправителем.
+     *
+     * @param chat диалог, в котором появилось сообщение
+     * @param sender отправитель сообщения
      */
     private void notifyRecipient(Chat chat, User sender) {
         UUID recipientId;
@@ -266,6 +315,11 @@ public class ChatService {
     /**
      * Публикует read-receipt в персональную очередь другой стороны диалога.
      * Получатель события — это тот, чьи сообщения только что были прочитаны.
+     *
+     * @param chat диалог, в котором были прочитаны сообщения
+     * @param readerUserId идентификатор того, кто прочитал
+     * @param readAt время прочтения
+     * @param count количество прочитанных сообщений
      */
     private void broadcastReadReceipt(Chat chat, UUID readerUserId, LocalDateTime readAt, int count) {
         // Определяем «другую сторону» — это автор прочитанных сообщений
@@ -297,6 +351,10 @@ public class ChatService {
 
     /**
      * Преобразует Chat в DTO с превью последнего сообщения и счётчиком непрочитанных.
+     *
+     * @param chat сущность диалога
+     * @param currentUserId идентификатор текущего пользователя (для подсчёта непрочитанных)
+     * @return ChatResponse DTO диалога
      */
     private ChatResponse mapToChatResponse(Chat chat, UUID currentUserId) {
         Optional<ChatMessage> lastMessage =
@@ -322,6 +380,9 @@ public class ChatService {
 
     /**
      * Преобразует ChatMessage в DTO.
+     *
+     * @param message сущность сообщения
+     * @return ChatMessageResponse DTO сообщения
      */
     private ChatMessageResponse mapToMessageResponse(ChatMessage message) {
         return ChatMessageResponse.builder()
@@ -340,6 +401,9 @@ public class ChatService {
     /**
      * Формирует превью сообщения для списка диалогов.
      * Если есть текст — возвращает его, иначе помечает как вложение.
+     *
+     * @param message сообщение, для которого нужно сформировать превью
+     * @return текст превью или null, если сообщение пустое
      */
     private String buildPreview(ChatMessage message) {
         if (message.getContent() != null && !message.getContent().isBlank()) {
