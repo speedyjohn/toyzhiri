@@ -265,6 +265,8 @@ public class NotificationService {
 
             case REVIEW_RECEIVED -> settings.getBookingUpdates();
 
+            case NEW_MESSAGE -> settings.getChatMessages();
+
             case PROMOTION -> settings.getPromotions();
 
             case EVENT_REMINDER -> settings.getEventReminders();
