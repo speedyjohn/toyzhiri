@@ -53,8 +53,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody AuthRequest request,
-            HttpServletRequest httpRequest)
-    {
+            HttpServletRequest httpRequest) {
         AuthResponse response = authService.login(request, httpRequest);
         return ResponseEntity.ok(response);
     }
@@ -71,8 +70,7 @@ public class AuthController {
     )
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(
-            @Valid @RequestBody RefreshTokenRequest request)
-    {
+            @Valid @RequestBody RefreshTokenRequest request) {
         AuthResponse response = authService.refreshToken(request);
         return ResponseEntity.ok(response);
     }
@@ -81,7 +79,7 @@ public class AuthController {
      * Выход из системы (отзыв токена).
      *
      * @param userDetails данные аутентифицированного пользователя
-     * @param request HTTP запрос для извлечения токена
+     * @param request     HTTP запрос для извлечения токена
      * @return ResponseEntity<LogoutResponse> сообщение об успешном выходе
      */
     @Operation(
@@ -92,8 +90,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<LogoutResponse> logout(
             @AuthenticationPrincipal UserDetails userDetails,
-            HttpServletRequest request)
-    {
+            HttpServletRequest request) {
         LogoutResponse response = authService.logout(userDetails, request);
         return ResponseEntity.ok(response);
     }

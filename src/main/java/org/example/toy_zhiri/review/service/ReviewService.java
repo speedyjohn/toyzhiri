@@ -47,9 +47,9 @@ public class ReviewService {
     /**
      * Клиент оставляет отзыв.
      * Условия:
-     *  - бронирование должно принадлежать клиенту
-     *  - статус бронирования — COMPLETED
-     *  - отзыв на это бронирование ещё не оставлен
+     * - бронирование должно принадлежать клиенту
+     * - статус бронирования — COMPLETED
+     * - отзыв на это бронирование ещё не оставлен
      */
     @Transactional
     public ReviewResponse createReview(UUID userId, CreateReviewRequest request) {
@@ -244,9 +244,9 @@ public class ReviewService {
             return Sort.by(Sort.Direction.DESC, "createdAt");
         }
         return switch (sortType) {
-            case BEST  -> Sort.by(Sort.Direction.DESC, "rating");
-            case WORST -> Sort.by(Sort.Direction.ASC,  "rating");
-            case NEW   -> Sort.by(Sort.Direction.DESC, "createdAt");
+            case BEST -> Sort.by(Sort.Direction.DESC, "rating");
+            case WORST -> Sort.by(Sort.Direction.ASC, "rating");
+            case NEW -> Sort.by(Sort.Direction.DESC, "createdAt");
         };
     }
 

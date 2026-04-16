@@ -15,11 +15,16 @@ import java.util.UUID;
 @Repository
 public interface SubscriptionRepository extends JpaRepository<Subscription, UUID> {
     Optional<Subscription> findByServiceIdAndStatus(UUID serviceId, SubscriptionStatus status);
+
     Page<Subscription> findByPartnerIdOrderByCreatedAtDesc(UUID partnerId, Pageable pageable);
+
     List<Subscription> findByStatusAndExpiresAtBefore(SubscriptionStatus status, LocalDateTime now);
+
     // Подписки с заданным статусом, истекающие в указанный промежуток времени.
     // Используется джобой для поиска ACTIVE-подписок, до истечения которых остался 1 день.
     List<Subscription> findByStatusAndExpiresAtBetween(SubscriptionStatus status, LocalDateTime from, LocalDateTime to);
+
     boolean existsByServiceIdAndStatus(UUID serviceId, SubscriptionStatus status);
+
     Page<Subscription> findByServiceIdOrderByCreatedAtDesc(UUID serviceId, Pageable pageable);
 }

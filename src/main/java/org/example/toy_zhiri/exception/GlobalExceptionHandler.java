@@ -26,8 +26,6 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // ===================== Кастомные исключения =====================
-
     /**
      * Обрабатывает все кастомные исключения, наследующие {@link BaseException}.
      */
@@ -44,8 +42,6 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(ex.getHttpStatus()).body(response);
     }
-
-    // ===================== Spring Validation =====================
 
     /**
      * Обрабатывает ошибки валидации @Valid (MethodArgumentNotValidException).
@@ -71,8 +67,6 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
-
-    // ===================== Spring Security =====================
 
     /**
      * Обрабатывает Spring Security AccessDeniedException.
@@ -130,8 +124,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
-    // ===================== Spring Data =====================
-
     /**
      * Обрабатывает DuplicateKeyException (дубликат в БД).
      */
@@ -148,8 +140,6 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
-
-    // ===================== Spring Web =====================
 
     /**
      * Обрабатывает невалидный JSON в теле запроса.
@@ -220,8 +210,6 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(response);
     }
-
-    // ===================== Fallback =====================
 
     /**
      * Обрабатывает все необработанные исключения.

@@ -92,7 +92,7 @@ public class AuthService {
      * Выполняет авторизацию пользователя.
      * Возвращает access токен и refresh токен.
      *
-     * @param request данные для авторизации
+     * @param request     данные для авторизации
      * @param httpRequest HTTP запрос для логирования
      * @return AuthResponse access и refresh токены
      * @throws AuthException если email или пароль неверны, или аккаунт заблокирован

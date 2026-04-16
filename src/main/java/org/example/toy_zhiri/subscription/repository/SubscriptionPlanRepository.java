@@ -12,6 +12,8 @@ import java.util.UUID;
 @Repository
 public interface SubscriptionPlanRepository extends JpaRepository<SubscriptionPlan, UUID> {
     List<SubscriptionPlan> findByStatusOrderByDisplayOrderAsc(SubscriptionPlanStatus status);
+
     Optional<SubscriptionPlan> findBySlug(String slug);
+
     boolean existsBySlug(String slug);
 }

@@ -41,12 +41,16 @@ public class Notification {
     @Column(name = "is_read", nullable = false)
     private Boolean isRead = false;
 
-    /** Тип связанной сущности (BOOKING, SERVICE, REVIEW и т.д.) */
+    /**
+     * Тип связанной сущности (BOOKING, SERVICE, REVIEW и т.д.)
+     */
     @Enumerated(EnumType.STRING)
     @Column(name = "related_entity_type", length = 50)
     private RelatedEntityType relatedEntityType;
 
-    /** ID связанной сущности для формирования ссылок на фронтенде */
+    /**
+     * ID связанной сущности для формирования ссылок на фронтенде
+     */
     @Column(name = "related_entity_id")
     private UUID relatedEntityId;
 

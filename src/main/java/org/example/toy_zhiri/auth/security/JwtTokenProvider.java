@@ -36,8 +36,8 @@ public class JwtTokenProvider {
      * Генерирует JWT токен для пользователя.
      *
      * @param userId идентификатор пользователя
-     * @param email email пользователя
-     * @param role роль пользователя
+     * @param email  email пользователя
+     * @param role   роль пользователя
      * @return сгенерированный JWT токен в виде строки
      */
     public String generateToken(UUID userId, String email, String role) {

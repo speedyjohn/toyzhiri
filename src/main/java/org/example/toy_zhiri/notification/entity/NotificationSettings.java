@@ -40,27 +40,37 @@ public class NotificationSettings {
 
     // --- Типы событий (общие) ---
 
-    /** Изменения статуса бронирования */
+    /**
+     * Изменения статуса бронирования
+     */
     @Column(name = "booking_updates", nullable = false)
     private Boolean bookingUpdates = true;
 
-    /** Новые сообщения в чате */
+    /**
+     * Новые сообщения в чате
+     */
     @Column(name = "chat_messages", nullable = false)
     private Boolean chatMessages = true;
 
-    /** Акции и спецпредложения */
+    /**
+     * Акции и спецпредложения
+     */
     @Column(name = "promotions", nullable = false)
     private Boolean promotions = false;
 
     // --- Типы событий только для клиентов ---
 
-    /** Напоминания о предстоящем мероприятии */
+    /**
+     * Напоминания о предстоящем мероприятии
+     */
     @Column(name = "event_reminders", nullable = false)
     private Boolean eventReminders = true;
 
     // --- Типы событий только для партнёров ---
 
-    /** Новые входящие бронирования */
+    /**
+     * Новые входящие бронирования
+     */
     @Column(name = "new_bookings", nullable = false)
     private Boolean newBookings = true;
 

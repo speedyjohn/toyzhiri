@@ -13,8 +13,12 @@ import java.util.UUID;
 @Repository
 public interface ServiceRepository extends JpaRepository<Service, UUID>, JpaSpecificationExecutor<Service> {
     Page<Service> findByIsActiveTrueAndIsApprovedTrue(Pageable pageable);
+
     Page<Service> findByCategoryIdAndIsActiveTrueAndIsApprovedTrue(UUID categoryId, Pageable pageable);
+
     Page<Service> findByPartnerIdAndIsActiveTrue(UUID partnerId, Pageable pageable);
+
     List<Service> findByPartnerId(UUID partnerId);
+
     List<Service> findByIsApprovedFalse();
 }

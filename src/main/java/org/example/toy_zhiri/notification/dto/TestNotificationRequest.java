@@ -20,19 +20,27 @@ public class TestNotificationRequest {
     @NotBlank(message = "Текст сообщения обязателен")
     private String message;
 
-    /** Email получателя. Если не указан — используется email текущего пользователя */
+    /**
+     * Email получателя. Если не указан — используется email текущего пользователя
+     */
     @Email(message = "Некорректный формат email")
     private String recipientEmail;
 
-    /** Отправить in-app уведомление */
+    /**
+     * Отправить in-app уведомление
+     */
     @NotNull
     private Boolean push = true;
 
-    /** Отправить email */
+    /**
+     * Отправить email
+     */
     @NotNull
     private Boolean email = true;
 
-    /** Отправить SMS (лог) */
+    /**
+     * Отправить SMS (лог)
+     */
     @NotNull
     private Boolean sms = true;
 }

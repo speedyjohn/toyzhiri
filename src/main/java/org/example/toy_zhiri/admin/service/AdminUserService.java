@@ -125,11 +125,11 @@ public class AdminUserService {
             user.setEmailVerified(false);
         }
 
-        if(request.getFirstName() != null) {
+        if (request.getFirstName() != null) {
             user.setFirstName(request.getFirstName());
         }
 
-        if(request.getLastName() != null) {
+        if (request.getLastName() != null) {
             user.setLastName(request.getLastName());
         }
 

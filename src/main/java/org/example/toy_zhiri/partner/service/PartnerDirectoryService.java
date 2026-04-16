@@ -60,9 +60,9 @@ public class PartnerDirectoryService {
      * Получить список всех партнеров с фильтрацией.
      *
      * @param pageable параметры пагинации
-     * @param city фильтр по городу
-     * @param status фильтр по статусу
-     * @param search поиск по названию компании
+     * @param city     фильтр по городу
+     * @param status   фильтр по статусу
+     * @param search   поиск по названию компании
      * @return страница с партнерами
      */
     public Page<PartnerProfileResponse> getAllPartners(
@@ -98,7 +98,7 @@ public class PartnerDirectoryService {
     /**
      * Обновить профиль партнера (частичное обновление).
      *
-     * @param userId идентификатор пользователя
+     * @param userId  идентификатор пользователя
      * @param request данные для обновления
      * @return обновленная информация о партнере
      */

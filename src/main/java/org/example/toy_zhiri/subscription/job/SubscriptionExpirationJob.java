@@ -21,14 +21,14 @@ import java.util.List;
 
 /**
  * Плановое задание для обработки истекающих и истекших подписок.
- *
+ * <p>
  * Цепочка статусов:
- *   ACTIVE → EXPIRING_7_DAYS → EXPIRING_3_DAYS → EXPIRING_SOON → EXPIRED
- *
+ * ACTIVE → EXPIRING_7_DAYS → EXPIRING_3_DAYS → EXPIRING_SOON → EXPIRED
+ * <p>
  * Каждый переход происходит ровно один раз — дублирования уведомлений нет.
  * На каждом шаге партнёр может оформить новую подписку заранее.
  * При истечении услуга деактивируется только если новой активной подписки нет.
- *
+ * <p>
  * Запускается при старте сервера и затем каждые 30 минут.
  */
 @Component
@@ -36,9 +36,9 @@ import java.util.List;
 @Slf4j
 public class SubscriptionExpirationJob {
 
-    private static final int WARN_7_DAYS  = 7;
-    private static final int WARN_3_DAYS  = 3;
-    private static final int WARN_1_DAY   = 1;
+    private static final int WARN_7_DAYS = 7;
+    private static final int WARN_3_DAYS = 3;
+    private static final int WARN_1_DAY = 1;
 
     private final SubscriptionRepository subscriptionRepository;
     private final ServiceRepository serviceRepository;

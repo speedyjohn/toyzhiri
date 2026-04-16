@@ -52,8 +52,7 @@ public class ChatController {
     )
     public ResponseEntity<ChatResponse> createOrGetChat(
             @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody CreateChatRequest request)
-    {
+            @Valid @RequestBody CreateChatRequest request) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         ChatResponse response = chatService.getOrCreateChat(user.getId(), request.getPartnerId());
 
@@ -74,8 +73,7 @@ public class ChatController {
     )
     public ResponseEntity<ChatResponse> getChat(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable UUID chatId)
-    {
+            @PathVariable UUID chatId) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         ChatResponse response = chatService.getChatById(chatId, user.getId());
 
@@ -94,8 +92,7 @@ public class ChatController {
     )
     public ResponseEntity<Page<ChatResponse>> getMyChatsAsClient(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PageableDefault(size = 20) Pageable pageable)
-    {
+            @PageableDefault(size = 20) Pageable pageable) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         Page<ChatResponse> response = chatService.getMyChatsAsClient(user.getId(), pageable);
 
@@ -114,8 +111,7 @@ public class ChatController {
     )
     public ResponseEntity<Page<ChatResponse>> getMyChatsAsPartner(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PageableDefault(size = 20) Pageable pageable)
-    {
+            @PageableDefault(size = 20) Pageable pageable) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         Page<ChatResponse> response = chatService.getMyChatsAsPartner(user.getId(), pageable);
 
@@ -133,8 +129,7 @@ public class ChatController {
             security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<Map<String, Long>> getUnreadCount(
-            @AuthenticationPrincipal UserDetails userDetails)
-    {
+            @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         long count = chatService.getTotalUnreadCount(user.getId());
 
@@ -154,8 +149,7 @@ public class ChatController {
     public ResponseEntity<Page<ChatMessageResponse>> getMessages(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID chatId,
-            @PageableDefault(size = 50) Pageable pageable)
-    {
+            @PageableDefault(size = 50) Pageable pageable) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         Page<ChatMessageResponse> response = chatService.getMessages(chatId, user.getId(), pageable);
 
@@ -177,8 +171,7 @@ public class ChatController {
     public ResponseEntity<ChatMessageResponse> sendMessage(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID chatId,
-            @Valid @RequestBody SendMessageRequest request)
-    {
+            @Valid @RequestBody SendMessageRequest request) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         ChatMessageResponse response = chatService.sendMessage(
                 chatId, user.getId(), request.getContent(), request.getAttachmentUrls());
@@ -200,8 +193,7 @@ public class ChatController {
     )
     public ResponseEntity<Map<String, Integer>> markAsRead(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable UUID chatId)
-    {
+            @PathVariable UUID chatId) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         int updated = chatService.markAsRead(chatId, user.getId());
 

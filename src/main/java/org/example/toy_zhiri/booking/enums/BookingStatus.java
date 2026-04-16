@@ -2,7 +2,7 @@ package org.example.toy_zhiri.booking.enums;
 
 /**
  * Статусы бронирования.
- *
+ * <p>
  * Жизненный цикл:
  * PENDING_CONFIRMATION → CONFIRMED → PAID → COMPLETED
  * PENDING_CONFIRMATION → REJECTED

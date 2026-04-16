@@ -63,7 +63,7 @@ public class CartService {
     /**
      * Удаляет элемент корзины по ID элемента.
      *
-     * @param userId ID текущего пользователя
+     * @param userId     ID текущего пользователя
      * @param cartItemId ID элемента корзины
      * @return сообщение об успешном удалении
      */

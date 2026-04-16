@@ -70,7 +70,7 @@ public class ServiceService {
 
     /**
      * Строит объект Sort на основе типа сортировки.
-     *
+     * <p>
      * POPULARITY — bookings_count DESC, затем views_count DESC.
      * PRICE_ASC  — price_from ASC.
      * PRICE_DESC — price_from DESC.

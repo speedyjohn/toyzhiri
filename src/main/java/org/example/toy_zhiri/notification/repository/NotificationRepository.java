@@ -14,16 +14,24 @@ import java.util.UUID;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
 
-    /** Все уведомления пользователя (новые сверху) */
+    /**
+     * Все уведомления пользователя (новые сверху)
+     */
     Page<Notification> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
-    /** Только непрочитанные уведомления пользователя */
+    /**
+     * Только непрочитанные уведомления пользователя
+     */
     Page<Notification> findByUserIdAndIsReadFalseOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
-    /** Количество непрочитанных */
+    /**
+     * Количество непрочитанных
+     */
     long countByUserIdAndIsReadFalse(UUID userId);
 
-    /** Пометить все уведомления пользователя как прочитанные */
+    /**
+     * Пометить все уведомления пользователя как прочитанные
+     */
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true, n.readAt = CURRENT_TIMESTAMP " +
             "WHERE n.user.id = :userId AND n.isRead = false")

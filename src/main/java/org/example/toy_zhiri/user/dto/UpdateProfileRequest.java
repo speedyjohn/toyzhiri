@@ -18,8 +18,8 @@ import lombok.NoArgsConstructor;
 public class UpdateProfileRequest {
     @Size(min = 2, max = 100, message = "Имя должно быть от 2 до 100 символов")
     @Pattern(
-        regexp = "^[a-zA-Zа-яА-ЯёЁ\\s-]+$",
-        message = "Имя может содержать только буквы, пробелы и дефисы"
+            regexp = "^[a-zA-Zа-яА-ЯёЁ\\s-]+$",
+            message = "Имя может содержать только буквы, пробелы и дефисы"
     )
     private String firstName;
 

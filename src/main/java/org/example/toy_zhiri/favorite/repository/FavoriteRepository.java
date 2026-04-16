@@ -12,7 +12,10 @@ import java.util.UUID;
 @Repository
 public interface FavoriteRepository extends JpaRepository<Favorite, UUID> {
     Page<Favorite> findByUserId(UUID userId, Pageable pageable);
+
     Optional<Favorite> findByUserIdAndServiceId(UUID userId, UUID serviceId);
+
     boolean existsByUserIdAndServiceId(UUID userId, UUID serviceId);
+
     void deleteByUserIdAndServiceId(UUID userId, UUID serviceId);
 }

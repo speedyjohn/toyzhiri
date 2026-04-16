@@ -12,8 +12,12 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewSummaryResponse {
-    /** Средний рейтинг, например 4.6 */
+    /**
+     * Средний рейтинг, например 4.6
+     */
     private BigDecimal averageRating;
-    /** Общее количество видимых отзывов */
+    /**
+     * Общее количество видимых отзывов
+     */
     private Long totalReviews;
 }

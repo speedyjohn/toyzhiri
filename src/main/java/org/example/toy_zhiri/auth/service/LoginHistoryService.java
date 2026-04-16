@@ -24,10 +24,10 @@ public class LoginHistoryService {
     /**
      * Логирует попытку входа.
      *
-     * @param user пользователь
-     * @param success успешность попытки
+     * @param user          пользователь
+     * @param success       успешность попытки
      * @param failureReason причина неудачи (если не успешно)
-     * @param request HTTP запрос для получения IP и User-Agent
+     * @param request       HTTP запрос для получения IP и User-Agent
      */
     @Transactional
     public void logLogin(User user, boolean success, String failureReason, HttpServletRequest request) {
@@ -47,7 +47,7 @@ public class LoginHistoryService {
     /**
      * Логирует выход пользователя.
      *
-     * @param user пользователь
+     * @param user    пользователь
      * @param request HTTP запрос
      */
     @Transactional
@@ -67,7 +67,7 @@ public class LoginHistoryService {
     /**
      * Получает историю входов пользователя.
      *
-     * @param userId идентификатор пользователя
+     * @param userId   идентификатор пользователя
      * @param pageable параметры пагинации
      * @return страница с историей входов
      */

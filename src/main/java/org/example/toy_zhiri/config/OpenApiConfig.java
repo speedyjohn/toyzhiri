@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Настройки и описание для Swagger.
- *
+ * <p>
  * Группы:
  * - Public        — публичные эндпоинты (каталог услуг, партнёры, тарифы, публичные отзывы)
  * - Auth          — регистрация, вход, refresh токен
@@ -25,104 +25,104 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @OpenAPIDefinition(
-    info = @Info(
-        title = "Toy Zhiri API",
-        version = "1.0",
-        description = "REST API для платформы Toy Zhiri",
-        contact = @Contact(
-            name = "Toy Zhiri Support",
-            email = "support@toyzhiri.kz"
-        )
-    ),
-    servers = {
-        @Server(
-            description = "Local Environment",
-            url = "http://localhost:8080"
-        )
-    }
+        info = @Info(
+                title = "Toy Zhiri API",
+                version = "1.0",
+                description = "REST API для платформы Toy Zhiri",
+                contact = @Contact(
+                        name = "Toy Zhiri Support",
+                        email = "support@toyzhiri.kz"
+                )
+        ),
+        servers = {
+                @Server(
+                        description = "Local Environment",
+                        url = "http://localhost:8080"
+                )
+        }
 )
 @SecurityScheme(
-    name = "bearerAuth",
-    description = "JWT авторизация. Введите токен в формате: Bearer {token}",
-    scheme = "bearer",
-    type = SecuritySchemeType.HTTP,
-    bearerFormat = "JWT",
-    in = SecuritySchemeIn.HEADER
+        name = "bearerAuth",
+        description = "JWT авторизация. Введите токен в формате: Bearer {token}",
+        scheme = "bearer",
+        type = SecuritySchemeType.HTTP,
+        bearerFormat = "JWT",
+        in = SecuritySchemeIn.HEADER
 )
 public class OpenApiConfig {
 
     @Bean
     public GroupedOpenApi publicApi() {
         return GroupedOpenApi.builder()
-            .group("1. Public")
-            .pathsToMatch(
-                "/api/v1/services/**",
-                "/api/v1/partners/**",
-                "/api/v1/subscription-plans/**",
-                "/api/v1/reviews/service/**",
-                "/api/v1/reviews/partner/**"
-            )
-            .build();
+                .group("1. Public")
+                .pathsToMatch(
+                        "/api/v1/services/**",
+                        "/api/v1/partners/**",
+                        "/api/v1/subscription-plans/**",
+                        "/api/v1/reviews/service/**",
+                        "/api/v1/reviews/partner/**"
+                )
+                .build();
     }
 
     @Bean
     public GroupedOpenApi authApi() {
         return GroupedOpenApi.builder()
-            .group("2. Auth")
-            .pathsToMatch("/api/v1/auth/**")
-            .build();
+                .group("2. Auth")
+                .pathsToMatch("/api/v1/auth/**")
+                .build();
     }
 
     @Bean
     public GroupedOpenApi clientApi() {
         return GroupedOpenApi.builder()
-            .group("3. Client")
-            .pathsToMatch(
-                "/api/v1/users/**",
-                "/api/v1/bookings/**",
-                "/api/v1/cart/**",
-                "/api/v1/favorites/**",
-                "/api/v1/reviews/**",
-                "/api/v1/files/**"
-            )
-            .build();
+                .group("3. Client")
+                .pathsToMatch(
+                        "/api/v1/users/**",
+                        "/api/v1/bookings/**",
+                        "/api/v1/cart/**",
+                        "/api/v1/favorites/**",
+                        "/api/v1/reviews/**",
+                        "/api/v1/files/**"
+                )
+                .build();
     }
 
     @Bean
     public GroupedOpenApi partnerApi() {
         return GroupedOpenApi.builder()
-            .group("4. Partner")
-            .pathsToMatch(
-                "/api/v1/partner/**",
-                "/api/v1/subscriptions/**",
-                "/api/v1/payments/**",
-                "/api/v1/files/**"
-            )
-            .build();
+                .group("4. Partner")
+                .pathsToMatch(
+                        "/api/v1/partner/**",
+                        "/api/v1/subscriptions/**",
+                        "/api/v1/payments/**",
+                        "/api/v1/files/**"
+                )
+                .build();
     }
 
     @Bean
     public GroupedOpenApi notificationsApi() {
         return GroupedOpenApi.builder()
-            .group("5. Notifications")
-            .pathsToMatch("/api/v1/notifications/**")
-            .build();
+                .group("5. Notifications")
+                .pathsToMatch("/api/v1/notifications/**")
+                .build();
     }
 
 
     @Bean
     public GroupedOpenApi chatApi() {
         return GroupedOpenApi.builder()
-            .group("6. Chat")
-            .pathsToMatch("/api/v1/chats/**")
-            .build();
+                .group("6. Chat")
+                .pathsToMatch("/api/v1/chats/**")
+                .build();
     }
 
     @Bean
     public GroupedOpenApi adminApi() {
         return GroupedOpenApi.builder()
-            .group("7. Admin")
-            .pathsToMatch("/api/v1/admin/**")
-            .build();
+                .group("7. Admin")
+                .pathsToMatch("/api/v1/admin/**")
+                .build();
     }
 }

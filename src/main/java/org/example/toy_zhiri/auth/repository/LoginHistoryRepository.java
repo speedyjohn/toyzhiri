@@ -17,7 +17,7 @@ public interface LoginHistoryRepository extends JpaRepository<LoginHistory, UUID
     /**
      * Находит историю входов пользователя с пагинацией.
      *
-     * @param userId идентификатор пользователя
+     * @param userId   идентификатор пользователя
      * @param pageable параметры пагинации
      * @return Page<LoginHistory> страница с историей входов
      */
@@ -26,7 +26,7 @@ public interface LoginHistoryRepository extends JpaRepository<LoginHistory, UUID
     /**
      * Подсчитывает общее количество входов пользователя.
      *
-     * @param userId идентификатор пользователя
+     * @param userId  идентификатор пользователя
      * @param success только успешные входы
      * @return количество входов
      */

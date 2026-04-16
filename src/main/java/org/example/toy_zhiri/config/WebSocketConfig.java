@@ -11,9 +11,9 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 /**
  * Конфигурация WebSocket поверх STOMP для реалтайм-функциональности.
- *
+ * <p>
  * Используется чатом, в перспективе — push-уведомлениями.
- *
+ * <p>
  * Эндпоинт подключения:    /ws  (с поддержкой SockJS-фолбэка)
  * Топики (broadcast):      /topic/chats/{chatId}
  * Персональные очереди:    /user/queue/...

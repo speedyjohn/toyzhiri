@@ -101,7 +101,8 @@ public class PartnerServiceService {
         if (request.getFullDescription() != null) service.setFullDescription(request.getFullDescription());
         if (request.getPriceFrom() != null) service.setPriceFrom(request.getPriceFrom());
         if (request.getPriceTo() != null) service.setPriceTo(request.getPriceTo());
-        if (request.getPriceType() != null) service.setPriceType(PriceType.valueOf(request.getPriceType().toUpperCase()));
+        if (request.getPriceType() != null)
+            service.setPriceType(PriceType.valueOf(request.getPriceType().toUpperCase()));
         if (request.getCity() != null) service.setCity(request.getCity());
         if (request.getAddress() != null) service.setAddress(request.getAddress());
         if (request.getThumbnail() != null) service.setThumbnail(request.getThumbnail());

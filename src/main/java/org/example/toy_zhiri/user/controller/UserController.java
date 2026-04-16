@@ -32,9 +32,9 @@ public class UserController {
      * @return ResponseEntity<UserInfoResponse> информация о пользователе
      */
     @Operation(
-        summary = "Мой профиль",
-        description = "Получить информацию о моем аккаунте",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Мой профиль",
+            description = "Получить информацию о моем аккаунте",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping("/me")
     public ResponseEntity<UserInfoResponse> getMyProfile(@AuthenticationPrincipal UserDetails userDetails) {
@@ -46,31 +46,31 @@ public class UserController {
      * Обновляет профиль текущего пользователя.
      *
      * @param userDetails данные аутентифицированного пользователя
-     * @param request данные для обновления
+     * @param request     данные для обновления
      * @return обновленная информация о пользователе
      */
     @Operation(
-        summary = "Редактировать профиль",
-        description = "Обновить информацию о своем профиле (имя, фамилия, телефон, город)",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Редактировать профиль",
+            description = "Обновить информацию о своем профиле (имя, фамилия, телефон, город)",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @PutMapping("/me")
     public ResponseEntity<UserInfoResponse> updateMyProfile(
-        @AuthenticationPrincipal UserDetails userDetails,
-        @Valid @RequestBody UpdateProfileRequest request) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody UpdateProfileRequest request) {
         UserInfoResponse response = userService.updateProfile(userDetails.getUsername(), request);
         return ResponseEntity.ok(response);
     }
 
     @Operation(
-        summary = "Удалить профиль",
-        description = "Удалить свой профиль (soft delete)",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Удалить профиль",
+            description = "Удалить свой профиль (soft delete)",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @PatchMapping("/me")
     public ResponseEntity<MessageResponse> deleteMyProfile(
-        @AuthenticationPrincipal UserDetails userDetails,
-        @Valid @RequestBody DeleteAccountRequest request) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody DeleteAccountRequest request) {
         MessageResponse response = userService.deleteAccount(userDetails.getUsername(), request);
         return ResponseEntity.ok(response);
     }
@@ -79,18 +79,18 @@ public class UserController {
      * Изменяет пароль пользователя.
      *
      * @param userDetails данные аутентифицированного пользователя
-     * @param request данные для смены пароля
+     * @param request     данные для смены пароля
      * @return ResponseEntity<MessageResponse> сообщение об успехе
      */
     @Operation(
-        summary = "Сменить пароль",
-        description = "Изменить свой пароль",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Сменить пароль",
+            description = "Изменить свой пароль",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @PutMapping("/me/password")
     public ResponseEntity<MessageResponse> changePassword(
-        @AuthenticationPrincipal UserDetails userDetails,
-        @Valid @RequestBody ChangePasswordRequest request) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ChangePasswordRequest request) {
         MessageResponse response = userService.changePassword(userDetails.getUsername(), request);
         return ResponseEntity.ok(response);
     }

@@ -28,13 +28,13 @@ import java.util.UUID;
 
 /**
  * Центральный сервис уведомлений.
- *
+ * <p>
  * Отвечает за:
  * - Создание in-app уведомлений с учётом настроек пользователя
  * - Получение списка уведомлений
  * - Пометку уведомлений как прочитанных
  * - Подсчёт непрочитанных
- *
+ * <p>
  * В будущем здесь же будет диспатч на email и SMS каналы.
  */
 @Service
@@ -52,12 +52,12 @@ public class NotificationService {
      * Перед созданием проверяет настройки пользователя — хочет ли он получать
      * уведомления данного типа.
      *
-     * @param userId              ID получателя
-     * @param type                тип уведомления
-     * @param title               заголовок
-     * @param message             текст сообщения
-     * @param relatedEntityType   тип связанной сущности (может быть null)
-     * @param relatedEntityId     ID связанной сущности (может быть null)
+     * @param userId            ID получателя
+     * @param type              тип уведомления
+     * @param title             заголовок
+     * @param message           текст сообщения
+     * @param relatedEntityType тип связанной сущности (может быть null)
+     * @param relatedEntityId   ID связанной сущности (может быть null)
      */
     @Transactional
     public void send(UUID userId,

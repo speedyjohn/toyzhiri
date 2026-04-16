@@ -100,6 +100,7 @@ public class ServiceController {
         UUID userId = userDetails != null ? userService.getIdByEmail(userDetails.getUsername()) : null;
         return ResponseEntity.ok(serviceService.getServiceById(serviceId, userId));
     }
+
     @GetMapping("/{serviceId}/unavailable-dates")
     @Operation(
             summary = "Недоступные даты услуги",

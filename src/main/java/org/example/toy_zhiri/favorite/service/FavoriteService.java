@@ -31,7 +31,6 @@ public class FavoriteService {
         if (favoriteRepository.existsByUserIdAndServiceId(userId, serviceId)) {
             throw new ConflictException("Услуга уже в избранном");
         }
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 

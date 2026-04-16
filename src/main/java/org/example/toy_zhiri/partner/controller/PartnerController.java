@@ -32,7 +32,7 @@ public class PartnerController {
      * Подает заявку пользователя на статус партнера.
      *
      * @param userDetails данные аутентифицированного пользователя
-     * @param request данные для регистрации партнера
+     * @param request     данные для регистрации партнера
      * @return PartnerResponse информация о созданной заявке
      */
     @PostMapping("/register")

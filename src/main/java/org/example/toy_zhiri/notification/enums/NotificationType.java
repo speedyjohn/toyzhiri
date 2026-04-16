@@ -2,7 +2,7 @@ package org.example.toy_zhiri.notification.enums;
 
 /**
  * Типы уведомлений в системе.
- *
+ * <p>
  * Группы:
  * - BOOKING_*     — события, связанные с бронированием
  * - SERVICE_*     — модерация услуг

@@ -38,7 +38,7 @@ public class SubscriptionService {
      * Если тариф бесплатный — подписка активируется сразу.
      * Если платный — статус PENDING до оплаты.
      *
-     * @param userId  ID пользователя-партнёра
+     * @param userId    ID пользователя-партнёра
      * @param serviceId ID услуги, на которую оформляется подписка
      * @param planId    ID тарифного плана
      */

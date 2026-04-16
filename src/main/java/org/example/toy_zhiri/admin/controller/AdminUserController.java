@@ -33,42 +33,42 @@ public class AdminUserController {
     /**
      * Получить список всех пользователей с пагинацией и фильтрацией.
      *
-     * @param page номер страницы (начиная с 0)
-     * @param size размер страницы
-     * @param sortBy поле для сортировки (по умолчанию createdAt)
+     * @param page          номер страницы (начиная с 0)
+     * @param size          размер страницы
+     * @param sortBy        поле для сортировки (по умолчанию createdAt)
      * @param sortDirection направление сортировки (ASC/DESC)
-     * @param role фильтр по роли (опционально)
-     * @param search поиск по email, имени (опционально)
+     * @param role          фильтр по роли (опционально)
+     * @param search        поиск по email, имени (опционально)
      * @param emailVerified фильтр по верификации email (опционально)
      * @return ResponseEntity<Page<AdminUserResponse>> страница с пользователями
      */
     @GetMapping
     @Operation(
-        summary = "Получить список пользователей",
-        description = "Получение списка всех пользователей с пагинацией, сортировкой и фильтрацией. ",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Получить список пользователей",
+            description = "Получение списка всех пользователей с пагинацией, сортировкой и фильтрацией. ",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<Page<AdminUserResponse>> getAllUsers(
-        @Parameter(description = "Номер страницы (начиная с 0)")
-        @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Номер страницы (начиная с 0)")
+            @RequestParam(defaultValue = "0") int page,
 
-        @Parameter(description = "Размер страницы")
-        @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "Размер страницы")
+            @RequestParam(defaultValue = "20") int size,
 
-        @Parameter(description = "Поле для сортировки")
-        @RequestParam(defaultValue = "createdAt") String sortBy,
+            @Parameter(description = "Поле для сортировки")
+            @RequestParam(defaultValue = "createdAt") String sortBy,
 
-        @Parameter(description = "Направление сортировки (ASC/DESC)")
-        @RequestParam(defaultValue = "DESC") Sort.Direction sortDirection,
+            @Parameter(description = "Направление сортировки (ASC/DESC)")
+            @RequestParam(defaultValue = "DESC") Sort.Direction sortDirection,
 
-        @Parameter(description = "Фильтр по роли")
-        @RequestParam(required = false) String role,
+            @Parameter(description = "Фильтр по роли")
+            @RequestParam(required = false) String role,
 
-        @Parameter(description = "Поиск по email, имени")
-        @RequestParam(required = false) String search,
+            @Parameter(description = "Поиск по email, имени")
+            @RequestParam(required = false) String search,
 
-        @Parameter(description = "Фильтр по верификации email")
-        @RequestParam(required = false) Boolean emailVerified) {
+            @Parameter(description = "Фильтр по верификации email")
+            @RequestParam(required = false) Boolean emailVerified) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
 
         Page<AdminUserResponse> users = adminUserService.getAllUsers(
@@ -86,13 +86,13 @@ public class AdminUserController {
      */
     @GetMapping("/{userId}")
     @Operation(
-        summary = "Получить пользователя по ID",
-        description = "Получение детальной информации о пользователе по его идентификатору. ",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Получить пользователя по ID",
+            description = "Получение детальной информации о пользователе по его идентификатору. ",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<AdminUserDetailResponse> getUserById(
-        @Parameter(description = "ID пользователя")
-        @PathVariable UUID userId) {
+            @Parameter(description = "ID пользователя")
+            @PathVariable UUID userId) {
         AdminUserDetailResponse user = adminUserService.getUserById(userId);
         return ResponseEntity.ok(user);
     }
@@ -105,13 +105,13 @@ public class AdminUserController {
      */
     @GetMapping("/by-email")
     @Operation(
-        summary = "Получить пользователя по email",
-        description = "Получение детальной информации о пользователе по его email. ",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Получить пользователя по email",
+            description = "Получение детальной информации о пользователе по его email. ",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<AdminUserDetailResponse> getUserByEmail(
-        @Parameter(description = "Email пользователя")
-        @RequestParam String email) {
+            @Parameter(description = "Email пользователя")
+            @RequestParam String email) {
         AdminUserDetailResponse user = adminUserService.getUserByEmail(email);
         return ResponseEntity.ok(user);
     }
@@ -124,12 +124,12 @@ public class AdminUserController {
      */
     @PostMapping
     @Operation(
-        summary = "Создать пользователя",
-        description = "Создание нового пользователя администратором. ",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Создать пользователя",
+            description = "Создание нового пользователя администратором. ",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<AdminUserResponse> createUser(
-        @Valid @RequestBody AdminCreateUserRequest request) {
+            @Valid @RequestBody AdminCreateUserRequest request) {
         AdminUserResponse user = adminUserService.createUser(request);
         return ResponseEntity.status(201).body(user);
     }
@@ -137,21 +137,21 @@ public class AdminUserController {
     /**
      * Обновить информацию о пользователе.
      *
-     * @param userId идентификатор пользователя
+     * @param userId  идентификатор пользователя
      * @param request данные для обновления
      * @return ResponseEntity<AdminUserResponse> обновленная информация о пользователе
      */
     @PutMapping("/{userId}")
     @Operation(
-        summary = "Обновить пользователя",
-        description = "Обновление информации о пользователе администратором. ",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Обновить пользователя",
+            description = "Обновление информации о пользователе администратором. ",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<AdminUserResponse> updateUser(
-        @Parameter(description = "ID пользователя")
-        @PathVariable UUID userId,
+            @Parameter(description = "ID пользователя")
+            @PathVariable UUID userId,
 
-        @Valid @RequestBody AdminUpdateUserRequest request) {
+            @Valid @RequestBody AdminUpdateUserRequest request) {
         AdminUserResponse user = adminUserService.updateUser(userId, request);
         return ResponseEntity.ok(user);
     }
@@ -159,21 +159,21 @@ public class AdminUserController {
     /**
      * Изменить роль пользователя.
      *
-     * @param userId идентификатор пользователя
+     * @param userId  идентификатор пользователя
      * @param request новая роль
      * @return ResponseEntity<AdminUserResponse> обновленная информация о пользователе
      */
     @PatchMapping("/{userId}/role")
     @Operation(
-        summary = "Изменить роль пользователя",
-        description = "Изменение роли пользователя (USER/PARTNER/ADMIN). ",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Изменить роль пользователя",
+            description = "Изменение роли пользователя (USER/PARTNER/ADMIN). ",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<AdminUserResponse> changeUserRole(
-        @Parameter(description = "ID пользователя")
-        @PathVariable UUID userId,
+            @Parameter(description = "ID пользователя")
+            @PathVariable UUID userId,
 
-        @Valid @RequestBody AdminChangeRoleRequest request) {
+            @Valid @RequestBody AdminChangeRoleRequest request) {
         AdminUserResponse user = adminUserService.changeUserRole(userId, request);
         return ResponseEntity.ok(user);
     }
@@ -181,21 +181,21 @@ public class AdminUserController {
     /**
      * Изменить статус верификации email пользователя.
      *
-     * @param userId идентификатор пользователя
+     * @param userId  идентификатор пользователя
      * @param request статус верификации
      * @return ResponseEntity<AdminUserResponse> обновленная информация о пользователе
      */
     @PatchMapping("/{userId}/email-verification")
     @Operation(
-        summary = "Изменить статус верификации email",
-        description = "Изменение статуса верификации email пользователя. ",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Изменить статус верификации email",
+            description = "Изменение статуса верификации email пользователя. ",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<AdminUserResponse> changeEmailVerification(
-        @Parameter(description = "ID пользователя")
-        @PathVariable UUID userId,
+            @Parameter(description = "ID пользователя")
+            @PathVariable UUID userId,
 
-        @Valid @RequestBody AdminChangeEmailVerificationRequest request) {
+            @Valid @RequestBody AdminChangeEmailVerificationRequest request) {
         AdminUserResponse user = adminUserService.changeEmailVerification(userId, request);
         return ResponseEntity.ok(user);
     }
@@ -203,7 +203,7 @@ public class AdminUserController {
     /**
      * Сбросить пароль пользователя.
      *
-     * @param userId идентификатор пользователя
+     * @param userId  идентификатор пользователя
      * @param request новый пароль
      * @return ResponseEntity<MessageResponse> сообщение об успешной операции
      */
@@ -214,10 +214,10 @@ public class AdminUserController {
             security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<MessageResponse> resetUserPassword(
-        @Parameter(description = "ID пользователя")
-        @PathVariable UUID userId,
+            @Parameter(description = "ID пользователя")
+            @PathVariable UUID userId,
 
-        @Valid @RequestBody AdminResetPasswordRequest request) {
+            @Valid @RequestBody AdminResetPasswordRequest request) {
         MessageResponse response = adminUserService.resetUserPassword(userId, request);
         return ResponseEntity.ok(response);
     }
@@ -225,21 +225,21 @@ public class AdminUserController {
     /**
      * Заблокировать/разблокировать пользователя (soft delete).
      *
-     * @param userId идентификатор пользователя
+     * @param userId  идентификатор пользователя
      * @param request статус активности
      * @return ResponseEntity<AdminUserResponse> обновленная информация о пользователе
      */
     @PatchMapping("/{userId}/active-status")
     @Operation(
-        summary = "Изменить статус активности пользователя",
-        description = "Блокировка или разблокировка пользователя. (soft delete) ",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Изменить статус активности пользователя",
+            description = "Блокировка или разблокировка пользователя. (soft delete) ",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<AdminUserResponse> changeActiveStatus(
-        @Parameter(description = "ID пользователя")
-        @PathVariable UUID userId,
+            @Parameter(description = "ID пользователя")
+            @PathVariable UUID userId,
 
-        @Valid @RequestBody AdminChangeActiveStatusRequest request) {
+            @Valid @RequestBody AdminChangeActiveStatusRequest request) {
         AdminUserResponse user = adminUserService.changeActiveStatus(userId, request);
         return ResponseEntity.ok(user);
     }
@@ -252,13 +252,13 @@ public class AdminUserController {
      */
     @DeleteMapping("/{userId}")
     @Operation(
-        summary = "Удалить пользователя",
-        description = "Полное удаление пользователя из системы (hard delete). ",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Удалить пользователя",
+            description = "Полное удаление пользователя из системы (hard delete). ",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<MessageResponse> deleteUser(
-        @Parameter(description = "ID пользователя")
-        @PathVariable UUID userId) {
+            @Parameter(description = "ID пользователя")
+            @PathVariable UUID userId) {
         MessageResponse response = adminUserService.deleteUser(userId);
         return ResponseEntity.ok(response);
     }
@@ -270,9 +270,9 @@ public class AdminUserController {
      */
     @GetMapping("/statistics")
     @Operation(
-        summary = "Получить статистику пользователей",
-        description = "Получение общей статистики. ",
-        security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Получить статистику пользователей",
+            description = "Получение общей статистики. ",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<UserStatisticsResponse> getUserStatistics() {
         UserStatisticsResponse statistics = adminUserService.getUserStatistics();

@@ -52,7 +52,7 @@ public class AdminServiceService {
      * Изменяет статус активности услуги.
      *
      * @param serviceId идентификатор услуги
-     * @param request статус активности
+     * @param request   статус активности
      * @return обновленная информация об услуге
      * @throws NotFoundException если услуга не найдена
      */
@@ -71,7 +71,7 @@ public class AdminServiceService {
      * Изменяет статус одобрения услуги.
      *
      * @param serviceId идентификатор услуги
-     * @param request статус одобрения и причина отказа (если есть)
+     * @param request   статус одобрения и причина отказа (если есть)
      * @return обновленная информация об услуге
      * @throws NotFoundException если услуга не найдена
      */
