@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * Контроллер для работы с корзиной пользователя.
+ */
 @RestController
 @RequestMapping("/api/v1/cart")
 @RequiredArgsConstructor
@@ -26,6 +29,13 @@ public class CartController {
     private final CartService cartService;
     private final UserService userService;
 
+    /**
+     * Добавляет услугу в корзину или обновляет существующий элемент.
+     *
+     * @param request     данные о добавляемой услуге
+     * @param userDetails данные аутентифицированного пользователя
+     * @return ResponseEntity<MessageResponse> сообщение об успешном добавлении
+     */
     @PostMapping
     @Operation(
             summary = "Добавить в корзину",
@@ -40,6 +50,13 @@ public class CartController {
         return ResponseEntity.ok(cartService.addToCart(userId, request));
     }
 
+    /**
+     * Удаляет конкретный элемент корзины по его ID.
+     *
+     * @param cartItemId  идентификатор элемента корзины
+     * @param userDetails данные аутентифицированного пользователя
+     * @return ResponseEntity<MessageResponse> сообщение об успешном удалении
+     */
     @DeleteMapping("/item/{cartItemId}")
     @Operation(
             summary = "Удалить элемент из корзины по ID элемента",
@@ -54,6 +71,13 @@ public class CartController {
         return ResponseEntity.ok(cartService.removeCartItem(userId, cartItemId));
     }
 
+    /**
+     * Удаляет услугу из корзины по ID услуги.
+     *
+     * @param serviceId   идентификатор услуги
+     * @param userDetails данные аутентифицированного пользователя
+     * @return ResponseEntity<MessageResponse> сообщение об успешном удалении
+     */
     @DeleteMapping("/{serviceId}")
     @Operation(
             summary = "Удалить из корзины по ID услуги",
@@ -68,6 +92,12 @@ public class CartController {
         return ResponseEntity.ok(cartService.removeFromCart(userId, serviceId));
     }
 
+    /**
+     * Полностью очищает корзину текущего пользователя.
+     *
+     * @param userDetails данные аутентифицированного пользователя
+     * @return ResponseEntity<MessageResponse> сообщение об успешной очистке
+     */
     @DeleteMapping
     @Operation(
             summary = "Очистить корзину",
@@ -81,6 +111,12 @@ public class CartController {
         return ResponseEntity.ok(cartService.clearCart(userId));
     }
 
+    /**
+     * Возвращает содержимое корзины текущего пользователя с итоговой суммой.
+     *
+     * @param userDetails данные аутентифицированного пользователя
+     * @return ResponseEntity<CartResponse> содержимое корзины
+     */
     @GetMapping
     @Operation(
             summary = "Моя корзина",

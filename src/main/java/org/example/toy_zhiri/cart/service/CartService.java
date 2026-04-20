@@ -22,6 +22,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Сервис для работы с корзиной пользователя.
+ * Позволяет добавлять, удалять и получать услуги, выбранные клиентом
+ * перед оформлением бронирования.
+ */
 @org.springframework.stereotype.Service
 @RequiredArgsConstructor
 public class CartService {
@@ -31,6 +36,16 @@ public class CartService {
     private final UserRepository userRepository;
     private final ServiceService serviceService;
 
+    /**
+     * Добавляет услугу в корзину пользователя.
+     * Если услуга уже есть в корзине, обновляет её параметры (количество, дату, заметки).
+     *
+     * @param userId  идентификатор пользователя
+     * @param request данные о добавляемой услуге
+     * @return MessageResponse сообщение об успешном добавлении
+     * @throws NotFoundException   если пользователь или услуга не найдены
+     * @throws BadRequestException если услуга неактивна или не одобрена
+     */
     @Transactional
     public MessageResponse addToCart(UUID userId, AddToCartRequest request) {
         User user = userRepository.findById(userId)
@@ -63,9 +78,11 @@ public class CartService {
     /**
      * Удаляет элемент корзины по ID элемента.
      *
-     * @param userId     ID текущего пользователя
-     * @param cartItemId ID элемента корзины
-     * @return сообщение об успешном удалении
+     * @param userId     идентификатор текущего пользователя
+     * @param cartItemId идентификатор элемента корзины
+     * @return MessageResponse сообщение об успешном удалении
+     * @throws NotFoundException     если элемент корзины не найден
+     * @throws AccessDeniedException если элемент принадлежит другому пользователю
      */
     @Transactional
     public MessageResponse removeCartItem(UUID userId, UUID cartItemId) {
@@ -83,6 +100,14 @@ public class CartService {
                 .build();
     }
 
+    /**
+     * Удаляет услугу из корзины по ID услуги.
+     *
+     * @param userId    идентификатор пользователя
+     * @param serviceId идентификатор услуги
+     * @return MessageResponse сообщение об успешном удалении
+     * @throws NotFoundException если услуга не найдена в корзине пользователя
+     */
     @Transactional
     public MessageResponse removeFromCart(UUID userId, UUID serviceId) {
         if (cartItemRepository.findByUserIdAndServiceId(userId, serviceId).isEmpty()) {
@@ -96,6 +121,12 @@ public class CartService {
                 .build();
     }
 
+    /**
+     * Полностью очищает корзину пользователя.
+     *
+     * @param userId идентификатор пользователя
+     * @return MessageResponse сообщение об успешной очистке
+     */
     @Transactional
     public MessageResponse clearCart(UUID userId) {
         cartItemRepository.deleteByUserId(userId);
@@ -105,6 +136,12 @@ public class CartService {
                 .build();
     }
 
+    /**
+     * Возвращает содержимое корзины пользователя с подсчётом итоговой суммы.
+     *
+     * @param userId идентификатор пользователя
+     * @return CartResponse содержимое корзины со списком услуг и итоговой суммой
+     */
     public CartResponse getCart(UUID userId) {
         List<CartItem> items = cartItemRepository.findByUserId(userId);
 

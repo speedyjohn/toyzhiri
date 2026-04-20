@@ -10,6 +10,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * DTO для отображения содержимого корзины пользователя.
+ * Содержит список элементов, общее количество и итоговую сумму.
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -19,6 +23,9 @@ public class CartResponse {
     private Integer totalItems;
     private BigDecimal totalPrice;
 
+    /**
+     * DTO для отображения отдельного элемента корзины.
+     */
     @Data
     @Builder
     @NoArgsConstructor

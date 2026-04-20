@@ -14,6 +14,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Сущность элемента корзины пользователя.
+ * Хранит услугу, добавленную клиентом для последующего оформления бронирования.
+ */
 @Entity
 @Table(name = "cart_items")
 @Data
