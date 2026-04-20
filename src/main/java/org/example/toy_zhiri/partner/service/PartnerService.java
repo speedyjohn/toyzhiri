@@ -181,4 +181,6 @@ public class PartnerService {
                         partner.getApprovedBy().getEmail() : null)
                 .build();
     }
+
+
 }

@@ -12,6 +12,8 @@ import org.example.toy_zhiri.exception.NotFoundException;
 import org.example.toy_zhiri.notification.enums.NotificationType;
 import org.example.toy_zhiri.notification.enums.RelatedEntityType;
 import org.example.toy_zhiri.notification.service.NotificationService;
+import org.example.toy_zhiri.partner.entity.Partner;
+import org.example.toy_zhiri.partner.repository.PartnerRepository;
 import org.example.toy_zhiri.review.dto.CreateReviewRequest;
 import org.example.toy_zhiri.review.dto.ReviewResponse;
 import org.example.toy_zhiri.review.dto.ReviewSummaryResponse;
@@ -41,8 +43,8 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final BookingRepository bookingRepository;
     private final ServiceRepository serviceRepository;
-    private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final PartnerRepository partnerRepository;
 
     /**
      * Клиент оставляет отзыв.
@@ -234,6 +236,39 @@ public class ReviewService {
         reviewRepository.delete(review);
 
         recalculateServiceRating(serviceId);
+    }
+
+    /**
+     * Возвращает отзывы по услуге партнёра с проверкой владения.
+     * Только владелец услуги может вызвать этот метод.
+     */
+    public Page<ReviewResponse> getPartnerServiceReviews(UUID userId, UUID serviceId,
+                                                         ReviewSortType sortType, Pageable pageable) {
+        assertServiceOwnership(userId, serviceId);
+        return getServiceReviews(serviceId, sortType, pageable);
+    }
+
+    /**
+     * Возвращает сводку рейтинга по услуге партнёра с проверкой владения.
+     */
+    public ReviewSummaryResponse getPartnerServiceReviewSummary(UUID userId, UUID serviceId) {
+        assertServiceOwnership(userId, serviceId);
+        return getServiceReviewSummary(serviceId);
+    }
+
+    /**
+     * Проверяет, что услуга принадлежит партнёру текущего пользователя.
+     */
+    private void assertServiceOwnership(UUID userId, UUID serviceId) {
+        Partner partner = partnerRepository.findByUserId(userId)
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
+
+        Service service = serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
+
+        if (!service.getPartner().getId().equals(partner.getId())) {
+            throw new AccessDeniedException("У вас нет доступа к этой услуге");
+        }
     }
 
     /**
