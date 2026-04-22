@@ -37,6 +37,7 @@ public class AuthService {
     private final TokenBlacklistService tokenBlacklistService;
     private final RefreshTokenService refreshTokenService;
     private final UserService userService;
+    private final EmailVerificationService emailVerificationService;
 
     /**
      * Регистрирует нового пользователя в системе.
@@ -75,6 +76,8 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
+        emailVerificationService.sendVerificationEmail(savedUser);
+
         return RegisterResponse.builder()
                 .id(savedUser.getId())
                 .email(savedUser.getEmail())
@@ -84,7 +87,8 @@ public class AuthService {
                 .city(savedUser.getCity())
                 .role(savedUser.getRole().name())
                 .createdAt(savedUser.getCreatedAt())
-                .message("Регистрация успешна")
+                .message("Регистрация успешна. На ваш email отправлено письмо с подтверждением. " +
+                        "Подтвердите email, чтобы войти в систему")
                 .build();
     }
 
@@ -117,6 +121,12 @@ public class AuthService {
             if (!user.getIsActive()) {
                 loginHistoryService.logLogin(user, false, "Аккаунт заблокирован", httpRequest);
                 throw new AuthException("Аккаунт заблокирован. Обратитесь к администратору.");
+            }
+
+            if (!user.getEmailVerified()) {
+                loginHistoryService.logLogin(user, false, "Email не подтверждён", httpRequest);
+                throw new AuthException(
+                        "Email не подтверждён. Проверьте почту или запросите повторную отправку письма");
             }
 
             authenticationManager.authenticate(

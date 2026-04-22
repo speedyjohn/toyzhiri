@@ -6,8 +6,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.toy_zhiri.admin.dto.MessageResponse;
 import org.example.toy_zhiri.auth.dto.*;
 import org.example.toy_zhiri.auth.service.AuthService;
+import org.example.toy_zhiri.auth.service.EmailVerificationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
 
     /**
      * Регистрирует нового пользователя в системе.
@@ -92,6 +95,47 @@ public class AuthController {
             @AuthenticationPrincipal UserDetails userDetails,
             HttpServletRequest request) {
         LogoutResponse response = authService.logout(userDetails, request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Подтверждает email пользователя по токену из письма.
+     *
+     * @param request запрос с токеном подтверждения
+     * @return ResponseEntity<MessageResponse> сообщение об успешном подтверждении
+     */
+    @Operation(
+            summary = "Подтверждение email",
+            description = "Подтверждает email пользователя по токену из письма. " +
+                    "Токен действителен 24 часа. После подтверждения пользователь может войти в систему"
+    )
+    @PostMapping("/verify-email")
+    public ResponseEntity<MessageResponse> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        emailVerificationService.verifyEmail(request.getToken());
+        MessageResponse response = MessageResponse.builder()
+                .message("Email успешно подтверждён. Теперь вы можете войти в систему")
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Повторно отправляет письмо с подтверждением email.
+     *
+     * @param request запрос с email пользователя
+     * @return ResponseEntity<MessageResponse> сообщение об успешной отправке
+     */
+    @Operation(
+            summary = "Повторная отправка письма подтверждения",
+            description = "Повторно отправляет письмо с ссылкой для подтверждения email. " +
+                    "Используется, если предыдущее письмо не пришло или токен истёк"
+    )
+    @PostMapping("/resend-verification")
+    public ResponseEntity<MessageResponse> resendVerification(
+            @Valid @RequestBody ResendVerificationRequest request) {
+        emailVerificationService.resendVerificationEmail(request.getEmail());
+        MessageResponse response = MessageResponse.builder()
+                .message("Письмо с подтверждением отправлено повторно на " + request.getEmail())
+                .build();
         return ResponseEntity.ok(response);
     }
 }

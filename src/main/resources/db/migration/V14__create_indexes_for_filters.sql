@@ -36,15 +36,20 @@ CREATE INDEX IF NOT EXISTS idx_services_reviews_rating
 CREATE INDEX IF NOT EXISTS idx_services_search
     ON services USING gin(
     to_tsvector('russian',
-    coalesce(name, '') || ' ' ||
-    coalesce(short_description, '') || ' ' ||
-    coalesce(full_description, '')
+    coalesce (name, '') || ' ' ||
+    coalesce (short_description, '') || ' ' ||
+    coalesce (full_description, '')
     )
     );
 
 -- Комментарии для документирования
-COMMENT ON INDEX idx_services_price_from IS 'Индекс для фильтрации по минимальной цене';
-COMMENT ON INDEX idx_services_rating IS 'Индекс для фильтрации и сортировки по рейтингу';
-COMMENT ON INDEX idx_services_city IS 'Индекс для фильтрации по городу';
-COMMENT ON INDEX idx_services_active_approved IS 'Частичный индекс для активных и одобренных услуг';
-COMMENT ON INDEX idx_services_search IS 'Полнотекстовый индекс для поиска по названию и описаниям';
+COMMENT
+ON INDEX idx_services_price_from IS 'Индекс для фильтрации по минимальной цене';
+COMMENT
+ON INDEX idx_services_rating IS 'Индекс для фильтрации и сортировки по рейтингу';
+COMMENT
+ON INDEX idx_services_city IS 'Индекс для фильтрации по городу';
+COMMENT
+ON INDEX idx_services_active_approved IS 'Частичный индекс для активных и одобренных услуг';
+COMMENT
+ON INDEX idx_services_search IS 'Полнотекстовый индекс для поиска по названию и описаниям';
