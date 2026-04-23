@@ -37,10 +37,10 @@ public class PartnerReviewController {
     /**
      * Возвращает отзывы к конкретной услуге текущего партнёра.
      *
-     * @param serviceId идентификатор услуги
-     * @param sort тип сортировки (NEW, BEST, WORST)
-     * @param page номер страницы
-     * @param size размер страницы
+     * @param serviceId   идентификатор услуги
+     * @param sort        тип сортировки (NEW, BEST, WORST)
+     * @param page        номер страницы
+     * @param size        размер страницы
      * @param userDetails данные аутентифицированного пользователя
      * @return ResponseEntity<Page<ReviewResponse>> страница с отзывами
      */
@@ -73,7 +73,7 @@ public class PartnerReviewController {
     /**
      * Возвращает сводку рейтинга по услуге текущего партнёра.
      *
-     * @param serviceId идентификатор услуги
+     * @param serviceId   идентификатор услуги
      * @param userDetails данные аутентифицированного пользователя
      * @return ResponseEntity<ReviewSummaryResponse> средний рейтинг и количество отзывов
      */

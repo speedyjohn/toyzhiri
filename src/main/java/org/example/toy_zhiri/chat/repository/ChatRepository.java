@@ -20,7 +20,7 @@ public interface ChatRepository extends JpaRepository<Chat, UUID> {
     /**
      * Находит диалог по паре (user, partner).
      *
-     * @param userId идентификатор пользователя-клиента
+     * @param userId    идентификатор пользователя-клиента
      * @param partnerId идентификатор партнёра
      * @return Optional с найденным диалогом
      */
@@ -29,7 +29,7 @@ public interface ChatRepository extends JpaRepository<Chat, UUID> {
     /**
      * Возвращает все диалоги клиента, отсортированные по последнему сообщению.
      *
-     * @param userId идентификатор пользователя-клиента
+     * @param userId   идентификатор пользователя-клиента
      * @param pageable параметры пагинации
      * @return Page<Chat> страница с диалогами
      */
@@ -44,7 +44,7 @@ public interface ChatRepository extends JpaRepository<Chat, UUID> {
      * Возвращает все диалоги партнёра, отсортированные по последнему сообщению.
      *
      * @param partnerId идентификатор партнёра
-     * @param pageable параметры пагинации
+     * @param pageable  параметры пагинации
      * @return Page<Chat> страница с диалогами
      */
     @Query("""

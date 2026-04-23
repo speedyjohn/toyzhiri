@@ -35,4 +35,8 @@ public class CreateBookingRequest {
     private String notes;
 
     private Map<String, Object> extraParams;
+
+    private UUID variantId;
+
+    private String customerNotes;
 }

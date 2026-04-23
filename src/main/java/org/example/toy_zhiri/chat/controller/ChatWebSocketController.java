@@ -18,13 +18,13 @@ import java.util.UUID;
 
 /**
  * STOMP-контроллер для отправки сообщений через WebSocket.
- *
+ * <p>
  * Клиент отправляет сообщения на:
- *   /app/chat.send/{chatId}
- *
+ * /app/chat.send/{chatId}
+ * <p>
  * Сервер публикует их подписчикам в:
- *   /topic/chats/{chatId}
- *
+ * /topic/chats/{chatId}
+ * <p>
  * Сама публикация в топик происходит внутри ChatService — это значит,
  * что REST-эндпоинт POST /api/v1/chats/{chatId}/messages тоже автоматически
  * рассылает сообщения по WebSocket. Единая точка записи в БД.
@@ -38,13 +38,13 @@ public class ChatWebSocketController {
 
     /**
      * Принимает сообщение от клиента через STOMP, сохраняет и публикует в топик.
-     *
+     * <p>
      * Возвращает результат отправителю в персональную очередь /user/queue/chat-ack —
      * это позволяет фронту понять, что сообщение действительно сохранилось,
      * и получить его реальный ID и timestamp.
      *
-     * @param chatId идентификатор чата (из destination variable)
-     * @param request запрос с текстом и/или вложениями
+     * @param chatId    идентификатор чата (из destination variable)
+     * @param request   запрос с текстом и/или вложениями
      * @param principal STOMP-принципал аутентифицированного пользователя
      * @return ChatMessageResponse DTO сохранённого сообщения
      * @throws IllegalStateException если WebSocket-сессия не аутентифицирована
@@ -54,8 +54,7 @@ public class ChatWebSocketController {
     public ChatMessageResponse sendMessage(
             @DestinationVariable UUID chatId,
             @Valid @Payload SendMessageRequest request,
-            Principal principal)
-    {
+            Principal principal) {
         if (!(principal instanceof StompPrincipal stompPrincipal)) {
             throw new IllegalStateException("WebSocket-сессия не аутентифицирована");
         }

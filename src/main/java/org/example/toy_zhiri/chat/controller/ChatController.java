@@ -43,7 +43,7 @@ public class ChatController {
      * Клиент может написать партнёру в любой момент, в том числе до бронирования.
      *
      * @param userDetails данные аутентифицированного пользователя
-     * @param request запрос с ID партнёра
+     * @param request     запрос с ID партнёра
      * @return ResponseEntity<ChatResponse> DTO диалога
      */
     @PostMapping
@@ -56,8 +56,7 @@ public class ChatController {
     )
     public ResponseEntity<ChatResponse> createOrGetChat(
             @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody CreateChatRequest request)
-    {
+            @Valid @RequestBody CreateChatRequest request) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         ChatResponse response = chatService.getOrCreateChat(user.getId(), request.getPartnerId());
 
@@ -70,7 +69,7 @@ public class ChatController {
      * Возвращает чат по ID.
      *
      * @param userDetails данные аутентифицированного пользователя
-     * @param chatId идентификатор чата
+     * @param chatId      идентификатор чата
      * @return ResponseEntity<ChatResponse> DTO диалога
      */
     @GetMapping("/{chatId}")
@@ -82,8 +81,7 @@ public class ChatController {
     )
     public ResponseEntity<ChatResponse> getChat(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable UUID chatId)
-    {
+            @PathVariable UUID chatId) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         ChatResponse response = chatService.getChatById(chatId, user.getId());
 
@@ -94,7 +92,7 @@ public class ChatController {
      * Возвращает все диалоги текущего пользователя как клиента.
      *
      * @param userDetails данные аутентифицированного пользователя
-     * @param pageable параметры пагинации
+     * @param pageable    параметры пагинации
      * @return ResponseEntity<Page<ChatResponse>> страница с диалогами
      */
     @GetMapping("/my/client")
@@ -106,8 +104,7 @@ public class ChatController {
     )
     public ResponseEntity<Page<ChatResponse>> getMyChatsAsClient(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PageableDefault(size = 20) Pageable pageable)
-    {
+            @PageableDefault(size = 20) Pageable pageable) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         Page<ChatResponse> response = chatService.getMyChatsAsClient(user.getId(), pageable);
 
@@ -118,7 +115,7 @@ public class ChatController {
      * Возвращает все диалоги текущего пользователя как партнёра.
      *
      * @param userDetails данные аутентифицированного пользователя
-     * @param pageable параметры пагинации
+     * @param pageable    параметры пагинации
      * @return ResponseEntity<Page<ChatResponse>> страница с диалогами
      */
     @GetMapping("/my/partner")
@@ -130,8 +127,7 @@ public class ChatController {
     )
     public ResponseEntity<Page<ChatResponse>> getMyChatsAsPartner(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PageableDefault(size = 20) Pageable pageable)
-    {
+            @PageableDefault(size = 20) Pageable pageable) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         Page<ChatResponse> response = chatService.getMyChatsAsPartner(user.getId(), pageable);
 
@@ -152,8 +148,7 @@ public class ChatController {
             security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<Map<String, Long>> getUnreadCount(
-            @AuthenticationPrincipal UserDetails userDetails)
-    {
+            @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         long count = chatService.getTotalUnreadCount(user.getId());
 
@@ -164,8 +159,8 @@ public class ChatController {
      * Возвращает историю сообщений чата с пагинацией (новые сверху).
      *
      * @param userDetails данные аутентифицированного пользователя
-     * @param chatId идентификатор чата
-     * @param pageable параметры пагинации
+     * @param chatId      идентификатор чата
+     * @param pageable    параметры пагинации
      * @return ResponseEntity<Page<ChatMessageResponse>> страница с сообщениями
      */
     @GetMapping("/{chatId}/messages")
@@ -178,8 +173,7 @@ public class ChatController {
     public ResponseEntity<Page<ChatMessageResponse>> getMessages(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID chatId,
-            @PageableDefault(size = 50) Pageable pageable)
-    {
+            @PageableDefault(size = 50) Pageable pageable) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         Page<ChatMessageResponse> response = chatService.getMessages(chatId, user.getId(), pageable);
 
@@ -190,8 +184,8 @@ public class ChatController {
      * Отправляет сообщение в чат.
      *
      * @param userDetails данные аутентифицированного пользователя
-     * @param chatId идентификатор чата
-     * @param request запрос с текстом и/или вложениями
+     * @param chatId      идентификатор чата
+     * @param request     запрос с текстом и/или вложениями
      * @return ResponseEntity<ChatMessageResponse> DTO сохранённого сообщения
      */
     @PostMapping("/{chatId}/messages")
@@ -206,8 +200,7 @@ public class ChatController {
     public ResponseEntity<ChatMessageResponse> sendMessage(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID chatId,
-            @Valid @RequestBody SendMessageRequest request)
-    {
+            @Valid @RequestBody SendMessageRequest request) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         ChatMessageResponse response = chatService.sendMessage(
                 chatId, user.getId(), request.getContent(), request.getAttachmentUrls());
@@ -221,7 +214,7 @@ public class ChatController {
      * Помечает все непрочитанные сообщения чата как прочитанные.
      *
      * @param userDetails данные аутентифицированного пользователя
-     * @param chatId идентификатор чата
+     * @param chatId      идентификатор чата
      * @return ResponseEntity<Map<String, Integer>> объект с полем markedAsRead
      */
     @PostMapping("/{chatId}/read")
@@ -233,8 +226,7 @@ public class ChatController {
     )
     public ResponseEntity<Map<String, Integer>> markAsRead(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable UUID chatId)
-    {
+            @PathVariable UUID chatId) {
         User user = userService.getUserByEmailOrThrow(userDetails.getUsername());
         int updated = chatService.markAsRead(chatId, user.getId());
 

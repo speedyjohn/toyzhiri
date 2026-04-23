@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.example.toy_zhiri.booking.enums.BookingStatus;
 import org.example.toy_zhiri.partner.entity.Partner;
 import org.example.toy_zhiri.service.entity.Service;
+import org.example.toy_zhiri.service.entity.ServiceVariant;
 import org.example.toy_zhiri.user.entity.User;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -76,6 +77,13 @@ public class Booking {
 
     @Column(name = "partner_confirmed", nullable = false)
     private Boolean partnerConfirmed = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "variant_id")
+    private ServiceVariant variant;
+
+    @Column(name = "customer_notes", columnDefinition = "TEXT")
+    private String customerNotes;
 
     @Column(name = "client_confirmed_at")
     private LocalDateTime clientConfirmedAt;

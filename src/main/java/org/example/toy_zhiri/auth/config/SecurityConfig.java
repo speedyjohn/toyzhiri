@@ -58,7 +58,11 @@ public class SecurityConfig {
                                 "/api/v1/reviews/service/**",
                                 "/api/v1/reviews/partner/**",
                                 "/webjars/**",
-                                "/ws/**"
+                                "/ws/**",
+                                "/api/v1/categories/*/attribute-schema",
+                                "/api/v1/categories/*/client-attribute-schema",
+                                "/api/v1/services/*/variants",
+                                "/api/v1/services/*/variants/search"
                         ).permitAll()
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/favorites/**").authenticated()

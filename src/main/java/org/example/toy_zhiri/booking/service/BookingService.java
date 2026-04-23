@@ -23,15 +23,18 @@ import org.example.toy_zhiri.partner.repository.PartnerRepository;
 import org.example.toy_zhiri.service.dto.UnavailableDatesResponse;
 import org.example.toy_zhiri.service.entity.Service;
 import org.example.toy_zhiri.service.entity.ServiceAvailability;
+import org.example.toy_zhiri.service.entity.ServiceVariant;
 import org.example.toy_zhiri.service.enums.AvailabilityStatus;
 import org.example.toy_zhiri.service.repository.ServiceAvailabilityRepository;
 import org.example.toy_zhiri.service.repository.ServiceRepository;
+import org.example.toy_zhiri.service.service.ServiceVariantService;
 import org.example.toy_zhiri.user.entity.User;
 import org.example.toy_zhiri.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -51,11 +54,15 @@ public class BookingService {
     private final ServiceAvailabilityRepository availabilityRepository;
     private final NotificationService notificationService;
     private final ChatRepository chatRepository;
+    private final ServiceVariantService serviceVariantService;
 
     /**
      * Создаёт новое бронирование.
      * После создания статус — PENDING_CONFIRMATION.
      * Партнёр должен ответить в течение 24 часов, иначе статус станет EXPIRED.
+     * <p>
+     * Если у услуги есть активные варианты, клиент обязан указать variantId.
+     * В этом случае проверка доступности идёт на уровне варианта (залы бронируются независимо).
      */
     @Transactional
     public BookingResponse createBooking(UUID userId, CreateBookingRequest request) {
@@ -69,9 +76,7 @@ public class BookingService {
             throw new BadRequestException("Услуга недоступна для бронирования");
         }
 
-        if (bookingRepository.existsActiveBookingForServiceOnDate(service.getId(), request.getEventDate())) {
-            throw new ConflictException("Выбранная дата уже занята. Пожалуйста, выберите другую дату.");
-        }
+        ServiceVariant variant = resolveVariant(service, request.getVariantId());
 
         boolean isBlockedByPartner = availabilityRepository
                 .findByServiceIdAndDate(service.getId(), request.getEventDate())
@@ -82,22 +87,24 @@ public class BookingService {
             throw new ConflictException("Выбранная дата недоступна. Партнёр заблокировал эту дату.");
         }
 
+        assertAvailability(service.getId(), variant, request.getEventDate());
+
+        BigDecimal price = variant != null ? variant.getPrice() : service.getPriceFrom();
+
         Partner partner = service.getPartner();
 
         Booking booking = Booking.builder()
                 .user(user)
                 .service(service)
                 .partner(partner)
+                .variant(variant)
                 .eventDate(request.getEventDate())
                 .eventTime(request.getEventTime())
                 .guestsCount(request.getGuestsCount())
-                .notes(request.getNotes())
+                .totalPrice(price)
+                .customerNotes(request.getCustomerNotes())
                 .extraParams(request.getExtraParams())
-                .totalPrice(service.getPriceFrom())
                 .status(BookingStatus.PENDING_CONFIRMATION)
-                .clientConfirmed(false)
-                .partnerConfirmed(false)
-                .expiresAt(LocalDateTime.now().plusHours(BOOKING_EXPIRY_HOURS))
                 .build();
 
         Booking saved = bookingRepository.save(booking);
@@ -455,6 +462,51 @@ public class BookingService {
                 .bookedDates(bookedDates)
                 .allUnavailableDates(allUnavailable)
                 .build();
+    }
+
+    /**
+     * Определяет вариант услуги для брони и валидирует его.
+     * - Если у услуги есть активные варианты — variantId обязателен.
+     * - Если у услуги вариантов нет — variantId должен быть null.
+     * - Если variantId передан — он должен принадлежать услуге и быть активным.
+     */
+    private ServiceVariant resolveVariant(Service service, UUID variantId) {
+        boolean serviceHasVariants = serviceVariantService.serviceHasVariants(service.getId());
+
+        if (variantId == null) {
+            if (serviceHasVariants) {
+                throw new BadRequestException(
+                        "Эта услуга имеет варианты — необходимо выбрать конкретный вариант (variantId)");
+            }
+            return null;
+        }
+
+        ServiceVariant variant = serviceVariantService.findByIdOrThrow(variantId);
+
+        if (!variant.getService().getId().equals(service.getId())) {
+            throw new BadRequestException("Вариант не принадлежит выбранной услуге");
+        }
+
+        if (!Boolean.TRUE.equals(variant.getIsActive())) {
+            throw new InvalidStateException("Выбранный вариант неактивен");
+        }
+
+        return variant;
+    }
+
+    /**
+     * Проверяет, что выбранная дата свободна.
+     * Если передан вариант — проверка идёт на уровне варианта (залы бронируются независимо).
+     * Если варианта нет — проверка на уровне услуги (обратная совместимость).
+     */
+    private void assertAvailability(UUID serviceId, ServiceVariant variant, LocalDate date) {
+        boolean occupied = variant != null
+                ? bookingRepository.existsActiveBookingForVariantOnDate(variant.getId(), date)
+                : bookingRepository.existsActiveBookingForServiceOnDate(serviceId, date);
+
+        if (occupied) {
+            throw new ConflictException("Выбранная дата уже занята. Пожалуйста, выберите другую дату.");
+        }
     }
 
     private void completeBooking(Booking booking) {

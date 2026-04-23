@@ -22,7 +22,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
     /**
      * Возвращает историю сообщений чата с пагинацией (новые сверху).
      *
-     * @param chatId идентификатор чата
+     * @param chatId   идентификатор чата
      * @param pageable параметры пагинации
      * @return Page<ChatMessage> страница сообщений
      */
@@ -40,7 +40,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
      * Подсчитывает количество непрочитанных сообщений в чате
      * для конкретного получателя (сообщения, отправленные НЕ им).
      *
-     * @param chatId идентификатор чата
+     * @param chatId      идентификатор чата
      * @param recipientId идентификатор получателя
      * @return количество непрочитанных сообщений
      */
@@ -72,9 +72,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
      * Помечает все непрочитанные сообщения чата как прочитанные
      * (только те, что были отправлены НЕ текущим пользователем).
      *
-     * @param chatId идентификатор чата
+     * @param chatId      идентификатор чата
      * @param recipientId идентификатор получателя (тот, кто читает)
-     * @param readAt время прочтения
+     * @param readAt      время прочтения
      * @return количество обновлённых записей
      */
     @Modifying

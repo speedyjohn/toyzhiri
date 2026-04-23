@@ -94,4 +94,18 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             @Param("from") LocalDate from,
             @Param("to") LocalDate to
     );
+
+    @Query("""
+            
+                SELECT COUNT(b) > 0 FROM Booking b
+            WHERE b.variant.id = :variantId
+              AND b.eventDate = :date
+              AND b.status IN (
+                  org.example.toy_zhiri.booking.enums.BookingStatus.PENDING_CONFIRMATION,
+                  org.example.toy_zhiri.booking.enums.BookingStatus.CONFIRMED
+              )
+            """)
+    boolean existsActiveBookingForVariantOnDate(
+            @Param("variantId") UUID variantId,
+            @Param("date") LocalDate date);
 }
