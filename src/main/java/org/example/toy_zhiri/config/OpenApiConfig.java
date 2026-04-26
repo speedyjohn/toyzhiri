@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * Настройки и описание для Swagger.
  * <p>
  * Группы:
- * - Public        — публичные эндпоинты (каталог услуг, партнёры, тарифы, публичные отзывы)
+ * - Public        — публичные эндпоинты (каталог услуг, партнёры, тарифы, публичные отзывы, stories)
  * - Auth          — регистрация, вход, refresh токен
  * - Client        — действия клиента (бронирования, корзина, избранное, отзывы, профиль, файлы)
  * - Partner       — личный кабинет партнёра (услуги, бронирования, подписки, оплата, файлы)
@@ -60,7 +60,9 @@ public class OpenApiConfig {
                         "/api/v1/partners/**",
                         "/api/v1/subscription-plans/**",
                         "/api/v1/reviews/service/**",
-                        "/api/v1/reviews/partner/**"
+                        "/api/v1/reviews/partner/**",
+                        "/api/v1/reviews/partner/**",
+                        "/api/v1/stories/**"
                 )
                 .build();
     }

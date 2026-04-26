@@ -63,7 +63,9 @@ public class SecurityConfig {
                                 "/api/v1/categories/*/attribute-schema",
                                 "/api/v1/categories/*/client-attribute-schema",
                                 "/api/v1/services/*/variants",
-                                "/api/v1/services/*/variants/search"
+                                "/api/v1/services/*/variants/search",
+                                "/api/v1/stories/feed",
+                                "/api/v1/stories/*"
                         ).permitAll()
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/favorites/**").authenticated()
