@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
 import org.example.toy_zhiri.user.dto.ChangePasswordRequest;
+import org.example.toy_zhiri.user.dto.CompleteProfileRequest;
 import org.example.toy_zhiri.user.dto.DeleteAccountRequest;
 import org.example.toy_zhiri.user.dto.UpdateProfileRequest;
 import org.example.toy_zhiri.user.dto.UserInfoResponse;
@@ -59,6 +60,28 @@ public class UserController {
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UpdateProfileRequest request) {
         UserInfoResponse response = userService.updateProfile(userDetails.getUsername(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Дозаполняет профиль (для пользователей, вошедших через Google).
+     * Доступно только если профиль ещё не завершён (profileCompleted = false).
+     *
+     * @param userDetails данные аутентифицированного пользователя
+     * @param request     телефон и город
+     * @return ResponseEntity<UserInfoResponse> обновлённая информация о пользователе
+     */
+    @Operation(
+            summary = "Завершить регистрацию",
+            description = "Дозаполнить телефон и город после первого входа через Google. " +
+                    "Если профиль уже заполнен — возвращает 400, используйте PUT /me",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping("/complete-profile")
+    public ResponseEntity<UserInfoResponse> completeProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody CompleteProfileRequest request) {
+        UserInfoResponse response = userService.completeProfile(userDetails.getUsername(), request);
         return ResponseEntity.ok(response);
     }
 

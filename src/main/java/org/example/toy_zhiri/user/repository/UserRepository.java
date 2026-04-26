@@ -22,6 +22,14 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     Optional<User> findByEmail(String email);
 
     /**
+     * Находит пользователя по телефону.
+     *
+     * @param phone телефон пользователя
+     * @return Optional<User> пользователь, если найден
+     */
+    Optional<User> findByPhone(String phone);
+
+    /**
      * Проверяет существование пользователя по email.
      *
      * @param email email для проверки

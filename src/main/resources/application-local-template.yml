@@ -17,3 +17,5 @@ app:
   mail:
     from: email@gmail.com
     enabled: true
+  google:
+    client-id: your-google-client-id.apps.googleusercontent.com

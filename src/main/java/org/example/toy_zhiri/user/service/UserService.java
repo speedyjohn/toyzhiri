@@ -8,10 +8,12 @@ import org.example.toy_zhiri.exception.ConflictException;
 import org.example.toy_zhiri.notification.enums.NotificationType;
 import org.example.toy_zhiri.notification.service.NotificationService;
 import org.example.toy_zhiri.user.dto.ChangePasswordRequest;
+import org.example.toy_zhiri.user.dto.CompleteProfileRequest;
+import org.example.toy_zhiri.user.dto.DeleteAccountRequest;
 import org.example.toy_zhiri.user.dto.UpdateProfileRequest;
 import org.example.toy_zhiri.user.dto.UserInfoResponse;
-import org.example.toy_zhiri.user.dto.DeleteAccountRequest;
 import org.example.toy_zhiri.user.entity.User;
+import org.example.toy_zhiri.user.enums.AuthProvider;
 import org.example.toy_zhiri.user.repository.UserRepository;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -98,11 +100,50 @@ public class UserService {
     }
 
     /**
+     * Дозаполняет профиль пользователя после входа через OAuth-провайдера.
+     * Доступно только если профиль ещё не завершён.
+     *
+     * @param email   email текущего пользователя
+     * @param request данные для дозаполнения (телефон, город)
+     * @return обновлённая информация о пользователе
+     * @throws BadRequestException если профиль уже завершён
+     * @throws ConflictException   если телефон занят другим пользователем
+     */
+    @Transactional
+    public UserInfoResponse completeProfile(String email, CompleteProfileRequest request) {
+        User user = getUserByEmailOrThrow(email);
+
+        if (Boolean.TRUE.equals(user.getProfileCompleted())) {
+            throw new BadRequestException(
+                    "Профиль уже заполнен. Используйте обновление профиля");
+        }
+
+        userRepository.findByPhone(request.getPhone()).ifPresent(existingUser -> {
+            if (!existingUser.getId().equals(user.getId())) {
+                throw new ConflictException("Пользователь с таким телефоном уже существует");
+            }
+        });
+
+        user.setPhone(request.getPhone());
+        user.setCity(request.getCity());
+        user.setProfileCompleted(true);
+
+        User saved = userRepository.save(user);
+
+        return mapToUserInfoResponse(saved);
+    }
+
+    /**
      * Изменяет пароль пользователя.
      */
     @Transactional
     public MessageResponse changePassword(String email, ChangePasswordRequest request) {
         User user = getUserByEmailOrThrow(email);
+
+        if (user.getAuthProvider() == AuthProvider.GOOGLE) {
+            throw new BadRequestException(
+                    "Смена пароля недоступна для аккаунтов, созданных через Google");
+        }
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new BadRequestException("Текущий пароль неверен");
@@ -135,8 +176,10 @@ public class UserService {
     public MessageResponse deleteAccount(String email, DeleteAccountRequest request) {
         User user = getUserByEmailOrThrow(email);
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new BadRequestException("Неверный пароль. Удаление отменено.");
+        if (user.getAuthProvider() == AuthProvider.LOCAL) {
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                throw new BadRequestException("Неверный пароль. Удаление отменено.");
+            }
         }
 
         // Удаляем пользователя (soft delete)
@@ -169,6 +212,8 @@ public class UserService {
                 .city(user.getCity())
                 .role(user.getRole().name())
                 .emailVerified(user.getEmailVerified())
+                .authProvider(user.getAuthProvider().name())
+                .profileCompleted(user.getProfileCompleted())
                 .lastLogin(user.getLastLogin())
                 .createdAt(user.getCreatedAt())
                 .build();

@@ -24,6 +24,8 @@ public class UserInfoResponse {
     private String city;
     private String role;
     private Boolean emailVerified;
+    private String authProvider;
+    private Boolean profileCompleted;
     private LocalDateTime lastLogin;
     private LocalDateTime createdAt;
 }

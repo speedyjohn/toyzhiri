@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/register",
+                                "/api/v1/auth/google",
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/verify-email",
                                 "/api/v1/auth/resend-verification",
@@ -90,24 +91,24 @@ public class SecurityConfig {
     }
 
     /**
-     * Создает кодировщик паролей BCrypt.
+     * Создает менеджер аутентификации.
      *
-     * @return экземпляр BCryptPasswordEncoder
+     * @param config конфигурация аутентификации
+     * @return менеджер аутентификации
+     * @throws Exception при ошибке получения менеджера
+     */
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    /**
+     * Создает кодировщик паролей на основе BCrypt.
+     *
+     * @return кодировщик паролей
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    /**
-     * Создает менеджер аутентификации.
-     *
-     * @param configuration конфигурация аутентификации
-     * @return AuthenticationManager менеджер аутентификации
-     * @throws Exception при ошибке получения менеджера
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
     }
 }

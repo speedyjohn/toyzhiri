@@ -45,3 +45,5 @@ app:
     enabled: false
   email-verification:
     token-ttl-hours: 24
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}

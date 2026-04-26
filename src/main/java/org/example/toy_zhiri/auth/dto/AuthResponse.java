@@ -15,4 +15,5 @@ import lombok.NoArgsConstructor;
 public class AuthResponse {
     private String token;
     private String refreshToken;
+    private Boolean profileCompleted;
 }

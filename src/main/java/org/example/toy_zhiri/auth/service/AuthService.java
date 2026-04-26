@@ -1,15 +1,18 @@
 package org.example.toy_zhiri.auth.service;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.auth.dto.*;
 import org.example.toy_zhiri.auth.entity.RefreshToken;
+import org.example.toy_zhiri.auth.security.GoogleTokenVerifier;
 import org.example.toy_zhiri.auth.security.JwtTokenProvider;
 import org.example.toy_zhiri.exception.AuthException;
 import org.example.toy_zhiri.exception.BadRequestException;
 import org.example.toy_zhiri.exception.ConflictException;
 import org.example.toy_zhiri.user.entity.User;
+import org.example.toy_zhiri.user.enums.AuthProvider;
 import org.example.toy_zhiri.user.enums.UserRole;
 import org.example.toy_zhiri.user.repository.UserRepository;
 import org.example.toy_zhiri.user.service.UserService;
@@ -38,6 +41,7 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final UserService userService;
     private final EmailVerificationService emailVerificationService;
+    private final GoogleTokenVerifier googleTokenVerifier;
 
     /**
      * Регистрирует нового пользователя в системе.
@@ -70,8 +74,10 @@ public class AuthService {
                 .phone(request.getPhone())
                 .city(request.getCity())
                 .role(UserRole.USER)
+                .authProvider(AuthProvider.LOCAL)
                 .emailVerified(false)
                 .isActive(true)
+                .profileCompleted(true)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -118,6 +124,12 @@ public class AuthService {
                 throw new AuthException("Неверный email или пароль");
             }
 
+            if (user.getAuthProvider() == AuthProvider.GOOGLE) {
+                loginHistoryService.logLogin(user, false, "Аккаунт создан через Google", httpRequest);
+                throw new AuthException(
+                        "Этот аккаунт зарегистрирован через Google. Используйте вход через Google");
+            }
+
             if (!user.getIsActive()) {
                 loginHistoryService.logLogin(user, false, "Аккаунт заблокирован", httpRequest);
                 throw new AuthException("Аккаунт заблокирован. Обратитесь к администратору.");
@@ -152,6 +164,7 @@ public class AuthService {
             return AuthResponse.builder()
                     .token(accessToken)
                     .refreshToken(refreshToken.getToken())
+                    .profileCompleted(user.getProfileCompleted())
                     .build();
 
         } catch (AuthenticationException e) {
@@ -160,6 +173,93 @@ public class AuthService {
             }
             throw new AuthException("Неверный email или пароль");
         }
+    }
+
+    /**
+     * Выполняет авторизацию пользователя через Google ID Token.
+     * Если пользователь существует — логинит, если нет — создаёт новый аккаунт.
+     *
+     * @param request     запрос с Google ID Token
+     * @param httpRequest HTTP запрос для логирования
+     * @return AuthResponse access и refresh токены
+     * @throws AuthException     если токен невалиден или аккаунт заблокирован
+     * @throws ConflictException если email занят локальным аккаунтом
+     */
+    @Transactional
+    public AuthResponse loginWithGoogle(GoogleLoginRequest request, HttpServletRequest httpRequest) {
+        GoogleIdToken.Payload payload = googleTokenVerifier.verify(request.getIdToken());
+
+        String email = payload.getEmail();
+        Boolean emailVerified = payload.getEmailVerified();
+        String firstName = (String) payload.get("given_name");
+        String lastName = (String) payload.get("family_name");
+
+        if (Boolean.FALSE.equals(emailVerified)) {
+            throw new AuthException("Email в Google не подтверждён");
+        }
+
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            user = createGoogleUser(email, firstName, lastName);
+        } else {
+            if (user.getAuthProvider() == AuthProvider.LOCAL) {
+                throw new ConflictException(
+                        "Этот email уже зарегистрирован через пароль. Войдите обычным способом");
+            }
+
+            if (!user.getIsActive()) {
+                loginHistoryService.logLogin(user, false, "Аккаунт заблокирован", httpRequest);
+                throw new AuthException("Аккаунт заблокирован. Обратитесь к администратору.");
+            }
+        }
+
+        user.setLastLogin(LocalDateTime.now());
+        userRepository.save(user);
+
+        loginHistoryService.logLogin(user, true, null, httpRequest);
+
+        String accessToken = jwtTokenProvider.generateToken(
+                user.getId(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+        return AuthResponse.builder()
+                .token(accessToken)
+                .refreshToken(refreshToken.getToken())
+                .profileCompleted(user.getProfileCompleted())
+                .build();
+    }
+
+    /**
+     * Создаёт нового пользователя на основе данных из Google.
+     * phone и city остаются null — пользователь дозаполнит их через
+     * /api/v1/users/complete-profile.
+     *
+     * @param email     email из Google
+     * @param firstName имя из Google
+     * @param lastName  фамилия из Google
+     * @return сохранённый пользователь
+     */
+    private User createGoogleUser(String email, String firstName, String lastName) {
+        User user = User.builder()
+                .email(email)
+                .password(null)
+                .firstName(firstName != null ? firstName : "User")
+                .lastName(lastName != null ? lastName : "Google")
+                .phone(null)
+                .city(null)
+                .role(UserRole.USER)
+                .authProvider(AuthProvider.GOOGLE)
+                .emailVerified(true)
+                .isActive(true)
+                .profileCompleted(false)
+                .build();
+
+        return userRepository.save(user);
     }
 
     /**
@@ -189,6 +289,7 @@ public class AuthService {
         return AuthResponse.builder()
                 .token(newAccessToken)
                 .refreshToken(newRefreshToken.getToken())
+                .profileCompleted(user.getProfileCompleted())
                 .build();
     }
 

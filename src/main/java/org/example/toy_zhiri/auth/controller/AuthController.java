@@ -46,7 +46,8 @@ public class AuthController {
     /**
      * Авторизует пользователя в системе.
      *
-     * @param request данные для авторизации
+     * @param request     данные для авторизации
+     * @param httpRequest HTTP запрос для логирования
      * @return ResponseEntity<AuthResponse> access и refresh токены
      */
     @Operation(
@@ -58,6 +59,29 @@ public class AuthController {
             @Valid @RequestBody AuthRequest request,
             HttpServletRequest httpRequest) {
         AuthResponse response = authService.login(request, httpRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Авторизует пользователя через Google ID Token.
+     * Если пользователя нет в системе — создаёт новый аккаунт автоматически.
+     *
+     * @param request     запрос с Google ID Token
+     * @param httpRequest HTTP запрос для логирования
+     * @return ResponseEntity<AuthResponse> access и refresh токены
+     */
+    @Operation(
+            summary = "Авторизация через Google",
+            description = "Принимает Google ID Token от фронтенда, верифицирует его " +
+                    "и возвращает пару access + refresh токенов. Автоматически создаёт " +
+                    "аккаунт, если пользователь входит впервые. " +
+                    "В ответе поле profileCompleted указывает, нужно ли дозаполнить профиль"
+    )
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> loginWithGoogle(
+            @Valid @RequestBody GoogleLoginRequest request,
+            HttpServletRequest httpRequest) {
+        AuthResponse response = authService.loginWithGoogle(request, httpRequest);
         return ResponseEntity.ok(response);
     }
 
