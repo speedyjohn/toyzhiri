@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.*;
 import org.example.toy_zhiri.admin.service.AdminUserService;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,49 +34,23 @@ public class AdminUserController {
     /**
      * Получить список всех пользователей с пагинацией и фильтрацией.
      *
-     * @param page          номер страницы (начиная с 0)
-     * @param size          размер страницы
-     * @param sortBy        поле для сортировки (по умолчанию createdAt)
-     * @param sortDirection направление сортировки (ASC/DESC)
-     * @param role          фильтр по роли (опционально)
-     * @param search        поиск по email, имени (опционально)
-     * @param emailVerified фильтр по верификации email (опционально)
+     * @param filter параметры фильтрации, сортировки и пагинации
      * @return ResponseEntity<Page<AdminUserResponse>> страница с пользователями
      */
     @GetMapping
     @Operation(
             summary = "Получить список пользователей",
-            description = "Получение списка всех пользователей с пагинацией, сортировкой и фильтрацией. ",
+            description = "Получение списка всех пользователей с пагинацией, сортировкой и фильтрацией.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<Page<AdminUserResponse>> getAllUsers(
-            @Parameter(description = "Номер страницы (начиная с 0)")
-            @RequestParam(defaultValue = "0") int page,
+            @ParameterObject @ModelAttribute UserFilterRequest filter) {
 
-            @Parameter(description = "Размер страницы")
-            @RequestParam(defaultValue = "20") int size,
-
-            @Parameter(description = "Поле для сортировки")
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-
-            @Parameter(description = "Направление сортировки (ASC/DESC)")
-            @RequestParam(defaultValue = "DESC") Sort.Direction sortDirection,
-
-            @Parameter(description = "Фильтр по роли")
-            @RequestParam(required = false) String role,
-
-            @Parameter(description = "Поиск по email, имени")
-            @RequestParam(required = false) String search,
-
-            @Parameter(description = "Фильтр по верификации email")
-            @RequestParam(required = false) Boolean emailVerified) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-
-        Page<AdminUserResponse> users = adminUserService.getAllUsers(
-                pageable, role, search, emailVerified
+        return ResponseEntity.ok(
+                adminUserService.getAllUsers(
+                        filter.toPageable(), filter.getRole(), filter.getSearch(), filter.getEmailVerified()
+                )
         );
-
-        return ResponseEntity.ok(users);
     }
 
     /**

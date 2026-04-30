@@ -33,7 +33,7 @@ public class RefreshTokenService {
      * Перед созданием удаляет все предыдущие refresh токены пользователя.
      *
      * @param user пользователь
-     * @return созданный refresh токен
+     * @return RefreshToken созданный refresh токен
      */
     @Transactional
     public RefreshToken createRefreshToken(User user) {
@@ -53,7 +53,7 @@ public class RefreshTokenService {
      * Находит refresh токен по значению.
      *
      * @param token значение токена
-     * @return Optional с найденным токеном
+     * @return Optional<RefreshToken> с найденным токеном
      */
     public Optional<RefreshToken> findByToken(String token) {
         return refreshTokenRepository.findByToken(token);
@@ -64,7 +64,7 @@ public class RefreshTokenService {
      * Если токен истёк, удаляет его и выбрасывает исключение.
      *
      * @param refreshToken refresh токен для проверки
-     * @return проверенный refresh токен
+     * @return RefreshToken проверенный refresh токен
      * @throws AuthException если токен истёк
      */
     @Transactional

@@ -33,6 +33,15 @@ public class PartnerBookingController {
     private final BookingService bookingService;
     private final UserService userService;
 
+    /**
+     * Просмотр входящих бронирований.
+     *
+     * @param status фильтр по статусу
+     * @param page номер страницы
+     * @param size размер страницы
+     * @param userDetails пользовательские поля
+     * @return ResponseEntity<Page<BookingResponse>> информация о зарегистрированном пользователе
+     */
     @GetMapping
     @Operation(
             summary = "Входящие бронирования",
@@ -56,6 +65,13 @@ public class PartnerBookingController {
         return ResponseEntity.ok(bookingService.getPartnerBookings(userId, status, pageable));
     }
 
+    /**
+     * Просмотр деталей бронирования.
+     *
+     * @param bookingId id бронирования
+     * @param userDetails пользовательские поля
+     * @return ResponseEntity<BookingResponse> информация о зарегистрированном пользователе
+     */
     @GetMapping("/{bookingId}")
     @Operation(
             summary = "Детали бронирования",
@@ -70,6 +86,13 @@ public class PartnerBookingController {
         return ResponseEntity.ok(bookingService.getPartnerBookingById(userId, bookingId));
     }
 
+    /**
+     * Подтверждение бронирования.
+     *
+     * @param bookingId id бронирования
+     * @param userDetails пользовательские поля
+     * @return ResponseEntity<BookingResponse> информация о зарегистрированном пользователе
+     */
     @PatchMapping("/{bookingId}/confirm")
     @Operation(
             summary = "Подтвердить бронирование",
@@ -84,6 +107,14 @@ public class PartnerBookingController {
         return ResponseEntity.ok(bookingService.confirmBooking(userId, bookingId));
     }
 
+    /**
+     * Отклонение сделки.
+     *
+     * @param bookingId id бронирования
+     * @param request детали отклонения заявки
+     * @param userDetails пользовательские поля
+     * @return ResponseEntity<BookingResponse> информация о зарегистрированном пользователе
+     */
     @PatchMapping("/{bookingId}/reject")
     @Operation(
             summary = "Отклонить бронирование",
@@ -102,6 +133,13 @@ public class PartnerBookingController {
         return ResponseEntity.ok(bookingService.rejectBooking(userId, bookingId, request));
     }
 
+    /**
+     * Подтверждение сделки.
+     *
+     * @param bookingId id бронирования
+     * @param userDetails пользовательские поля
+     * @return ResponseEntity<BookingResponse> информация о зарегистрированном пользователе
+     */
     @PatchMapping("/{bookingId}/complete")
     @Operation(
             summary = "Подтвердить завершение сделки",
@@ -118,6 +156,13 @@ public class PartnerBookingController {
         return ResponseEntity.ok(bookingService.partnerConfirmCompletion(userId, bookingId));
     }
 
+    /**
+     * Просмотр календаря бронирований.
+     *
+     * @param from начало периода
+     * @param to конец периода
+     * @return ResponseEntity<BookingResponse> информация о зарегистрированном пользователе
+     */
     @GetMapping("/calendar")
     @Operation(
             summary = "Календарь бронирований",

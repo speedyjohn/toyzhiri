@@ -28,6 +28,11 @@ public class AdminController {
     private final PartnerService partnerService;
     private final UserService userService;
 
+    /**
+     * Получить заявки на рассмотрении.
+     *
+     * @return ResponseEntity<List<PartnerResponse>> страница со всеми заявками на партнерство
+     */
     @GetMapping("/partners/pending")
     @Operation(
             summary = "Получить заявки на рассмотрении",
@@ -39,6 +44,12 @@ public class AdminController {
         return ResponseEntity.ok(partners);
     }
 
+    /**
+     * Получить заявки по конкретному статусу.
+     *
+     * @param status статус заявки
+     * @return ResponseEntity<List<PartnerResponse>> страница с историей входов
+     */
     @GetMapping("/partners/status/{status}")
     @Operation(
             summary = "Получить заявки по статусу",
@@ -51,6 +62,15 @@ public class AdminController {
         return ResponseEntity.ok(partners);
     }
 
+
+    /**
+     * Одобрить или отклонить заявку.
+     *
+     * @param partnerId   идентификатор партнера
+     * @param request     идентификатор партнера
+     * @param userDetails пользовательская информация партнера
+     * @return ResponseEntity<PartnerResponse> DTO с информацией о партнере
+     */
     @PostMapping("/partners/{partnerId}/approve")
     @Operation(
             summary = "Одобрить или отклонить заявку",

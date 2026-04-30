@@ -31,7 +31,13 @@ public class AdminUserService {
     private final NotificationService notificationService;
 
     /**
-     * Получает список всех пользователей с пагинацией и фильтрацией.
+     * Получить список всех пользователей с пагинацией и фильтрацией.
+     *
+     * @param pageable      параметры пагинации и сортировки
+     * @param role          фильтр по роли (опционально)
+     * @param search        поиск по email, имени (опционально)
+     * @param emailVerified фильтр по верификации email (опционально)
+     * @return Page<AdminUserResponse> страница с пользователями
      */
     public Page<AdminUserResponse> getAllUsers(Pageable pageable, String role,
                                                String search, Boolean emailVerified) {
@@ -66,7 +72,10 @@ public class AdminUserService {
     }
 
     /**
-     * Получает детальную информацию о пользователе по ID.
+     * Получить детальную информацию о пользователе по ID.
+     *
+     * @param userId идентификатор пользователя
+     * @return AdminUserDetailResponse детальная информация о пользователе
      */
     public AdminUserDetailResponse getUserById(UUID userId) {
         User user = userRepository.findById(userId)
@@ -76,7 +85,10 @@ public class AdminUserService {
     }
 
     /**
-     * Получает детальную информацию о пользователе по email.
+     * Получить детальную информацию о пользователе по email.
+     *
+     * @param email email пользователя
+     * @return AdminUserDetailResponse детальная информация о пользователе
      */
     public AdminUserDetailResponse getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
@@ -86,7 +98,10 @@ public class AdminUserService {
     }
 
     /**
-     * Создает нового пользователя (администратором).
+     * Создать нового пользователя администратором.
+     *
+     * @param request данные нового пользователя
+     * @return AdminUserResponse созданный пользователь
      */
     @Transactional
     public AdminUserResponse createUser(AdminCreateUserRequest request) {
@@ -110,7 +125,11 @@ public class AdminUserService {
     }
 
     /**
-     * Обновляет информацию о пользователе.
+     * Обновить информацию о пользователе.
+     *
+     * @param userId  идентификатор пользователя
+     * @param request данные для обновления
+     * @return AdminUserResponse обновлённый пользователь
      */
     @Transactional
     public AdminUserResponse updateUser(UUID userId, AdminUpdateUserRequest request) {
@@ -125,28 +144,21 @@ public class AdminUserService {
             user.setEmailVerified(false);
         }
 
-        if (request.getFirstName() != null) {
-            user.setFirstName(request.getFirstName());
-        }
-
-        if (request.getLastName() != null) {
-            user.setLastName(request.getLastName());
-        }
-
-        if (request.getPhone() != null) {
-            user.setPhone(request.getPhone());
-        }
-
-        if (request.getCity() != null) {
-            user.setCity(request.getCity());
-        }
+        if (request.getFirstName() != null) user.setFirstName(request.getFirstName());
+        if (request.getLastName() != null) user.setLastName(request.getLastName());
+        if (request.getPhone() != null) user.setPhone(request.getPhone());
+        if (request.getCity() != null) user.setCity(request.getCity());
 
         User updatedUser = userRepository.save(user);
         return mapToAdminUserResponse(updatedUser);
     }
 
     /**
-     * Изменяет роль пользователя.
+     * Изменить роль пользователя.
+     *
+     * @param userId  идентификатор пользователя
+     * @param request новая роль пользователя
+     * @return AdminUserResponse обновлённый пользователь
      */
     @Transactional
     public AdminUserResponse changeUserRole(UUID userId, AdminChangeRoleRequest request) {
@@ -165,7 +177,11 @@ public class AdminUserService {
     }
 
     /**
-     * Изменяет статус верификации email пользователя.
+     * Изменить статус верификации email пользователя.
+     *
+     * @param userId  идентификатор пользователя
+     * @param request новый статус верификации
+     * @return AdminUserResponse обновлённый пользователь
      */
     @Transactional
     public AdminUserResponse changeEmailVerification(UUID userId,
@@ -179,7 +195,12 @@ public class AdminUserService {
     }
 
     /**
-     * Сбрасывает пароль пользователя.
+     * Сбросить пароль пользователя администратором.
+     * После сброса пользователю отправляется уведомление.
+     *
+     * @param userId  идентификатор пользователя
+     * @param request новый пароль
+     * @return MessageResponse сообщение об успехе
      */
     @Transactional
     public MessageResponse resetUserPassword(UUID userId, AdminResetPasswordRequest request) {
@@ -189,7 +210,6 @@ public class AdminUserService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
-        // Уведомление пользователю о сбросе пароля администратором
         notificationService.send(
                 userId,
                 NotificationType.PASSWORD_CHANGED,
@@ -204,7 +224,12 @@ public class AdminUserService {
     }
 
     /**
-     * Изменяет статус активности пользователя (soft delete/restore).
+     * Изменить статус активности пользователя (блокировка / разблокировка).
+     * При блокировке пользователю отправляется уведомление.
+     *
+     * @param userId  идентификатор пользователя
+     * @param request новый статус активности
+     * @return AdminUserResponse обновлённый пользователь
      */
     @Transactional
     public AdminUserResponse changeActiveStatus(UUID userId,
@@ -213,10 +238,8 @@ public class AdminUserService {
                 .orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
 
         user.setIsActive(request.getIsActive());
-
         User updatedUser = userRepository.save(user);
 
-        // Уведомление при блокировке аккаунта
         if (!request.getIsActive()) {
             notificationService.send(
                     userId,
@@ -231,7 +254,10 @@ public class AdminUserService {
     }
 
     /**
-     * Удаляет пользователя из системы (hard delete).
+     * Удалить пользователя из системы (hard delete).
+     *
+     * @param userId идентификатор пользователя
+     * @return MessageResponse сообщение об успехе
      */
     @Transactional
     public MessageResponse deleteUser(UUID userId) {
@@ -247,7 +273,9 @@ public class AdminUserService {
     }
 
     /**
-     * Получает статистику по пользователям.
+     * Получить статистику по пользователям системы.
+     *
+     * @return UserStatisticsResponse агрегированная статистика пользователей
      */
     public UserStatisticsResponse getUserStatistics() {
         long totalUsers = userRepository.count();

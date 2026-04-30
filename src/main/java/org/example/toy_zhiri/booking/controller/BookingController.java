@@ -32,6 +32,12 @@ public class BookingController {
     private final BookingService bookingService;
     private final UserService userService;
 
+    /**
+     * Создать бронирование.
+     *
+     * @param request данные для бронирования
+     * @return ResponseEntity<BookingResponse> информация о новом бронировании
+     */
     @PostMapping
     @Operation(
             summary = "Создать бронирование",
@@ -47,6 +53,15 @@ public class BookingController {
         return ResponseEntity.status(201).body(bookingService.createBooking(userId, request));
     }
 
+    /**
+     * Просмотр информации о моих бронированиях.
+     *
+     * @param status фильтр по статусу
+     * @param page номер страницы
+     * @param size размер страницы
+     * @param userDetails пользовательские поля
+     * @return ResponseEntity<Page<BookingResponse>> информация о бронированиях
+     */
     @GetMapping
     @Operation(
             summary = "Мои бронирования",
@@ -70,6 +85,13 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getMyBookings(userId, status, pageable));
     }
 
+    /**
+     * Просмотр деталей бронирования.
+     *
+     * @param bookingId id бронирования
+     * @param userDetails пользовательские поля
+     * @return ResponseEntity<BookingResponse> информация по бронированию
+     */
     @GetMapping("/{bookingId}")
     @Operation(
             summary = "Детали бронирования",
@@ -84,6 +106,15 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getBookingById(userId, bookingId));
     }
 
+    /**
+     * Просмотр истории бронирований.
+     *
+     * @param filter фильтры в истории бронирования
+     * @param page номер страницы
+     * @param size размер страницы
+     * @param userDetails пользовательские поля
+     * @return ResponseEntity<Page<BookingResponse>> история бронирований
+     */
     @GetMapping("/history")
     @Operation(
             summary = "История бронирований",
@@ -107,6 +138,13 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getMyBookingHistory(userId, filter, pageable));
     }
 
+    /**
+     * Отмена бронирования.
+     *
+     * @param bookingId id бронирования
+     * @param userDetails пользовательские поля
+     * @return ResponseEntity<BookingResponse> информация об отмененном бронировании
+     */
     @PatchMapping("/{bookingId}/cancel")
     @Operation(
             summary = "Отменить бронирование",
@@ -122,6 +160,13 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.cancelBooking(userId, bookingId));
     }
 
+    /**
+     * Подтверждение сделки со стороны пользователя.
+     *
+     * @param bookingId id бронирования
+     * @param userDetails пользовательские поля
+     * @return ResponseEntity<BookingResponse> информация о подтвержденном бронировании
+     */
     @PatchMapping("/{bookingId}/complete")
     @Operation(
             summary = "Подтвердить завершение сделки",

@@ -40,12 +40,19 @@ public interface AttributeDefinitionRepository extends JpaRepository<AttributeDe
      * @param pageable параметры пагинации
      * @return страница определений атрибутов
      */
-    @Query("""
-            SELECT ad FROM AttributeDefinition ad
-            WHERE :search IS NULL
-               OR LOWER(ad.key) LIKE LOWER(CONCAT('%', :search, '%'))
-               OR LOWER(ad.labelRu) LIKE LOWER(CONCAT('%', :search, '%'))
-            """)
+    @Query(value = """
+            SELECT * FROM attribute_definitions
+            WHERE CAST(:search AS text) IS NULL
+               OR LOWER(key) LIKE LOWER('%' || :search || '%')
+               OR LOWER(label_ru) LIKE LOWER('%' || :search || '%')
+            """,
+            countQuery = """
+                    SELECT COUNT(*) FROM attribute_definitions
+                    WHERE CAST(:search AS text) IS NULL
+                       OR LOWER(key) LIKE LOWER('%' || :search || '%')
+                       OR LOWER(label_ru) LIKE LOWER('%' || :search || '%')
+                    """,
+            nativeQuery = true)
     Page<AttributeDefinition> search(@Param("search") String search, Pageable pageable);
 
     /**

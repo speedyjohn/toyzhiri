@@ -44,13 +44,19 @@ import java.util.UUID;
 @Slf4j
 public class StoryService {
 
-    /** Срок жизни сторис — 24 часа. */
+    /**
+     * Срок жизни сторис — 24 часа.
+     */
     private static final int STORY_LIFETIME_HOURS = 24;
 
-    /** Моковая фиксированная цена за публикацию одной сторис. */
+    /**
+     * Моковая фиксированная цена за публикацию одной сторис.
+     */
     private static final BigDecimal STORY_PRICE = new BigDecimal("1500.00");
 
-    /** Лимит сторис в публичной ленте. */
+    /**
+     * Лимит сторис в публичной ленте.
+     */
     private static final int FEED_LIMIT = 20;
 
     private final StoryRepository storyRepository;

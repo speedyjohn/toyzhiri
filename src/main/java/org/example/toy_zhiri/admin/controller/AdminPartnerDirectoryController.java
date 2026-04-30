@@ -7,9 +7,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.admin.dto.PartnerFilterRequest;
 import org.example.toy_zhiri.partner.dto.PartnerProfileResponse;
 import org.example.toy_zhiri.partner.enums.PartnerStatus;
 import org.example.toy_zhiri.partner.service.PartnerDirectoryService;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +33,13 @@ import java.util.UUID;
 public class AdminPartnerDirectoryController {
     private final PartnerDirectoryService partnerDirectoryService;
 
+
+    /**
+     * Получить общую статистику входов пользователя.
+     *
+     * @param filter фильтры для поиска
+     * @return ResponseEntity<Page<PartnerProfileResponse>> статистика входов
+     */
     @GetMapping
     @Operation(
             summary = "Получить список всех партнеров",
@@ -38,33 +47,13 @@ public class AdminPartnerDirectoryController {
             security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<Page<PartnerProfileResponse>> getAllPartners(
-            @Parameter(description = "Номер страницы")
-            @RequestParam(defaultValue = "0") int page,
+            @ParameterObject @ModelAttribute PartnerFilterRequest filter) {
 
-            @Parameter(description = "Размер страницы")
-            @RequestParam(defaultValue = "20") int size,
-
-            @Parameter(description = "Поле сортировки")
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-
-            @Parameter(description = "Направление сортировки")
-            @RequestParam(defaultValue = "DESC") Sort.Direction sortDirection,
-
-            @Parameter(description = "Фильтр по городу")
-            @RequestParam(required = false) String city,
-
-            @Parameter(description = "Фильтр по статусу")
-            @RequestParam(required = false) PartnerStatus status,
-
-            @Parameter(description = "Поиск по названию компании")
-            @RequestParam(required = false) String search) {
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        Page<PartnerProfileResponse> partners = partnerDirectoryService.getAllPartners(
-                pageable, city, status, search
+        return ResponseEntity.ok(
+                partnerDirectoryService.getAllPartners(
+                        filter.toPageable(), filter.getCity(), filter.getStatus(), filter.getSearch()
+                )
         );
-
-        return ResponseEntity.ok(partners);
     }
 
     @GetMapping("/{partnerId}")
