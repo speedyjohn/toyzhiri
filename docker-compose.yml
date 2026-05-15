@@ -16,8 +16,13 @@ services:
     networks:
       - toyzhiri-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d toyzhiri"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Spring Boot приложение
+  # Spring Boot приложение + nginx (reverse proxy на 80)
   app:
     build:
       context: .
@@ -37,14 +42,15 @@ services:
       APP_UPLOAD_DIR: /app/uploads
       APP_UPLOAD_MAX_SIZE: 5242880
 
-      # Server
+      # Server — Spring Boot слушает 8080 ВНУТРИ контейнера, nginx проксирует на него
       SERVER_PORT: 8080
     ports:
-      - "8080:8080"
+      - "80:80"
     volumes:
       - ./uploads:/app/uploads
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - toyzhiri-network
     restart: unless-stopped
