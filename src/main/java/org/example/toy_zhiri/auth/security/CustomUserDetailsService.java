@@ -52,9 +52,11 @@ public class CustomUserDetailsService implements UserDetailsService {
      * @return UserDetails
      */
     private UserDetails buildUserDetails(User user) {
+        String password = user.getPassword() != null ? user.getPassword() : "";
+
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
-                .password(user.getPassword())
+                .password(password)
                 .roles(user.getRole().name())
                 .build();
     }
