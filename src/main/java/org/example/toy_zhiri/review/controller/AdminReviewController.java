@@ -6,7 +6,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.toy_zhiri.admin.dto.MessageResponse;
+import org.example.toy_zhiri.review.dto.ReviewResponse;
 import org.example.toy_zhiri.review.service.ReviewService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -53,6 +58,24 @@ public class AdminReviewController {
         return ResponseEntity.ok(MessageResponse.builder()
                 .message("Отзыв восстановлен")
                 .build());
+    }
+
+    @GetMapping
+    @Operation(
+            summary = "Все отзывы",
+            description = "Список всех отзывов системы с пагинацией, включая скрытые. " +
+                    "Сортировка по умолчанию: новые первыми.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<Page<ReviewResponse>> getAllReviews(
+            @Parameter(description = "Номер страницы")
+            @RequestParam(defaultValue = "0") int page,
+
+            @Parameter(description = "Размер страницы")
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return ResponseEntity.ok(reviewService.getAllReviews(pageable));
     }
 
     @DeleteMapping("/{reviewId}")

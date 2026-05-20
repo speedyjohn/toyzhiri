@@ -165,6 +165,83 @@ public class SubscriptionService {
         return mapToResponse(subscriptionRepository.save(subscription));
     }
 
+    /**
+     * Досрочно отменяет активную подписку на услугу.
+     * Переводит статус ACTIVE → CANCELLED.
+     */
+    @Transactional
+    public SubscriptionResponse cancelActiveSubscription(UUID userId, UUID serviceId) {
+        Partner partner = partnerRepository.findByUserId(userId)
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
+
+        Service service = serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
+
+        if (!service.getPartner().getId().equals(partner.getId())) {
+            throw new AccessDeniedException("Услуга не принадлежит вам");
+        }
+
+        Subscription subscription = subscriptionRepository
+                .findByServiceIdAndStatus(serviceId, SubscriptionStatus.ACTIVE)
+                .orElseThrow(() -> new NotFoundException("Активная подписка для этой услуги не найдена"));
+
+        subscription.setStatus(SubscriptionStatus.CANCELLED);
+        return mapToResponse(subscriptionRepository.save(subscription));
+    }
+
+    /**
+     * Меняет тарифный план для услуги.
+     * Досрочно отменяет текущую активную или ожидающую подписку и создаёт новую.
+     */
+    @Transactional
+    public SubscriptionResponse changePlan(UUID userId, UUID serviceId, UUID newPlanId) {
+        Partner partner = partnerRepository.findByUserId(userId)
+                .orElseThrow(() -> new NotFoundException("Партнёр не найден"));
+
+        Service service = serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new NotFoundException("Услуга не найдена"));
+
+        if (!service.getPartner().getId().equals(partner.getId())) {
+            throw new AccessDeniedException("Услуга не принадлежит вам");
+        }
+
+        SubscriptionPlan newPlan = planRepository.findById(newPlanId)
+                .orElseThrow(() -> new NotFoundException("Тариф не найден"));
+
+        if (newPlan.getStatus() != SubscriptionPlanStatus.ACTIVE) {
+            throw new BadRequestException("Тариф недоступен");
+        }
+
+        subscriptionRepository.findByServiceIdAndStatus(serviceId, SubscriptionStatus.ACTIVE)
+                .ifPresent(s -> {
+                    s.setStatus(SubscriptionStatus.CANCELLED);
+                    subscriptionRepository.save(s);
+                });
+        subscriptionRepository.findByServiceIdAndStatus(serviceId, SubscriptionStatus.PENDING)
+                .ifPresent(s -> {
+                    s.setStatus(SubscriptionStatus.CANCELLED);
+                    subscriptionRepository.save(s);
+                });
+
+        Subscription newSubscription = Subscription.builder()
+                .partner(partner)
+                .service(service)
+                .plan(newPlan)
+                .build();
+
+        if (newPlan.getIsFree()) {
+            LocalDateTime now = LocalDateTime.now();
+            newSubscription.setStatus(SubscriptionStatus.ACTIVE);
+            newSubscription.setStartsAt(now);
+            newSubscription.setExpiresAt(now.plusDays(newPlan.getDurationDays()));
+            newSubscription.setPaidAmount(newPlan.getPrice());
+        } else {
+            newSubscription.setStatus(SubscriptionStatus.PENDING);
+        }
+
+        return mapToResponse(subscriptionRepository.save(newSubscription));
+    }
+
     private SubscriptionResponse mapToResponse(Subscription subscription) {
         return SubscriptionResponse.builder()
                 .id(subscription.getId())

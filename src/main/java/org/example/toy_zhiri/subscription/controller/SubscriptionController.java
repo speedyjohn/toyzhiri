@@ -103,4 +103,42 @@ public class SubscriptionController {
         UUID userId = userService.getIdByEmail(userDetails.getUsername());
         return ResponseEntity.ok(subscriptionService.cancelSubscription(userId, subscriptionId));
     }
+
+    @PostMapping("/services/{serviceId}/cancel-active")
+    @Operation(
+            summary = "Досрочно отменить активную подписку",
+            description = "Переводит активную подписку услуги в статус CANCELLED до истечения срока. " +
+                    "После отмены можно оформить новый тариф.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<SubscriptionResponse> cancelActiveSubscription(
+            @Parameter(description = "ID услуги")
+            @PathVariable UUID serviceId,
+
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        UUID userId = userService.getIdByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(subscriptionService.cancelActiveSubscription(userId, serviceId));
+    }
+
+    @PostMapping("/services/{serviceId}/change-plan/{newPlanId}")
+    @Operation(
+            summary = "Сменить тарифный план",
+            description = "Досрочно отменяет текущую активную или ожидающую подписку на услугу " +
+                    "и сразу создаёт новую с выбранным тарифом. " +
+                    "Бесплатный тариф активируется мгновенно, платный — переходит в статус PENDING.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<SubscriptionResponse> changePlan(
+            @Parameter(description = "ID услуги")
+            @PathVariable UUID serviceId,
+
+            @Parameter(description = "ID нового тарифного плана")
+            @PathVariable UUID newPlanId,
+
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        UUID userId = userService.getIdByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(subscriptionService.changePlan(userId, serviceId, newPlanId));
+    }
 }

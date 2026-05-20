@@ -153,6 +153,11 @@ public class ReviewService {
                 .map(this::mapToResponse);
     }
 
+    public Page<ReviewResponse> getAllReviews(Pageable pageable) {
+        return reviewRepository.findAll(pageable)
+                .map(this::mapToResponse);
+    }
+
     /**
      * Публичный список отзывов по партнёру с поддержкой сортировки.
      * Агрегирует отзывы по всем услугам партнёра.
