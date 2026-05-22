@@ -72,9 +72,11 @@ public class Booking {
     private Map<String, Object> extraParams;
 
     // Флаги двойного подтверждения завершения сделки
+    @Builder.Default
     @Column(name = "client_confirmed", nullable = false)
     private Boolean clientConfirmed = false;
 
+    @Builder.Default
     @Column(name = "partner_confirmed", nullable = false)
     private Boolean partnerConfirmed = false;
 
